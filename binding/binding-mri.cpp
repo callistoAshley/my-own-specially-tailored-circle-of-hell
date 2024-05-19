@@ -1123,7 +1123,7 @@ static void mriBindingExecute() {
     RUBY_INIT_STACK;
     ruby_init();
     
-    std::vector<const char*> rubyArgsC{"mkxp-z"};
+    std::vector<const char*> rubyArgsC{"oneshot"};
     rubyArgsC.push_back("-e ");
     void *node;
     if (conf.jit.enabled) {
@@ -1206,20 +1206,25 @@ static void mriBindingExecute() {
     rb_ary_push(lpaths, rb_str_new(resPath.c_str(), resPath.size()));
 #endif
     
-    if (!conf.rubyLoadpaths.empty()) {
-        /* Setup custom load paths */
-        for (size_t i = 0; i < conf.rubyLoadpaths.size(); ++i) {
-            std::string &path = conf.rubyLoadpaths[i];
+    // if (!conf.rubyLoadpaths.empty()) {
+    //     /* Setup custom load paths */
+    //     for (size_t i = 0; i < conf.rubyLoadpaths.size(); ++i) {
+    //         std::string &path = conf.rubyLoadpaths[i];
             
-            VALUE pathv = rb_str_new(path.c_str(), path.size());
-            rb_ary_push(lpaths, pathv);
-        }
-    }
-#ifndef WORKDIR_CURRENT
-    else {
-        rb_ary_push(lpaths, rb_utf8_str_new_cstr(mkxp_fs::getCurrentDirectory().c_str()));
-    }
-#endif
+    //         VALUE pathv = rb_str_new(path.c_str(), path.size());
+    //         rb_ary_push(lpaths, pathv);
+    //     }
+    // }
+// #ifndef WORKDIR_CURRENT
+//     else {
+//         rb_ary_push(lpaths, rb_utf8_str_new_cstr(mkxp_fs::getCurrentDirectory().c_str()));
+//     }
+// #endif
+
+    // Add the proper load paths. It needs to be added to $LOAD_PATH, otherwise encodings won't load..?
+    rb_eval_string(
+        "$LOAD_PATH.unshift(File.join(Dir.pwd, 'lib', 'ruby'))\n"
+        "$LOAD_PATH.unshift(File.join(Dir.pwd, 'lib', 'ruby', RUBY_PLATFORM))\n");
     
     RbData rbData;
     shState->setBindingData(&rbData);

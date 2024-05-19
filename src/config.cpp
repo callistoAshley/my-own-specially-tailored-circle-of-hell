@@ -121,13 +121,13 @@ json::value readConfFile(const char *path) {
     return ret;
 }
 
-#define CONF_FILE "mkxp.json"
+#define CONF_FILE "../mkxp.json"
 
 Config::Config() {}
 
 void Config::read(int argc, char *argv[]) {
     auto optsJ = json::object({
-        {"rgssVersion", 0},
+        {"rgssVersion", 1},
         {"debugMode", false},
         {"displayFPS", false},
         {"printFPS", false},
@@ -169,7 +169,7 @@ void Config::read(int argc, char *argv[]) {
         {"integerScalingActive", false},
         {"integerScalingLastMile", true},
         {"maxTextureSize", 0},
-        {"gameFolder", ""},
+        {"gameFolder", ".."},
         {"anyAltToggleFS", false},
         {"enableReset", true},
         {"enableSettings", true},
@@ -177,7 +177,7 @@ void Config::read(int argc, char *argv[]) {
         {"dataPathOrg", ""},
         {"dataPathApp", ""},
         {"iconPath", ""},
-        {"execName", "Game"},
+        {"execName", "oneshot"},
         {"midiSoundFont", ""},
         {"midiChorus", false},
         {"midiReverb", false},
@@ -198,12 +198,12 @@ void Config::read(int argc, char *argv[]) {
         {"YJITEnable", false},
         {"dumpAtlas", false},
         {"bindingNames", json::object({
-            {"a", "A"},
-            {"b", "B"},
-            {"c", "C"},
-            {"x", "X"},
-            {"y", "Y"},
-            {"z", "Z"},
+            {"action", "Action"},
+            {"cancel", "Cancel"},
+            {"menu", "Menu"},
+            {"items", "Items"},
+            {"run", "Run"},
+            {"deactivate", "Deactivate"},
             {"l", "L"},
             {"r", "R"}
         })}
@@ -327,12 +327,12 @@ try { exp } catch (...) {}
     auto &bnames = opts["bindingNames"].as_object();
     
 #define BINDING_NAME(btn) kbActionNames.btn = bnames[#btn].as_string()
-    BINDING_NAME(a);
-    BINDING_NAME(b);
-    BINDING_NAME(c);
-    BINDING_NAME(x);
-    BINDING_NAME(y);
-    BINDING_NAME(z);
+    BINDING_NAME(action);
+    BINDING_NAME(cancel);
+    BINDING_NAME(menu);
+    BINDING_NAME(items);
+    BINDING_NAME(run);
+    BINDING_NAME(deactivate);
     BINDING_NAME(l);
     BINDING_NAME(r);
     
@@ -374,6 +374,7 @@ bool Config::fontIsSolid(const char *fontName) const {
 }
 
 void Config::readGameINI() {
+    /*
     if (!customScript.empty()) {
         game.title = customScript.c_str();
         
@@ -430,7 +431,7 @@ void Config::readGameINI() {
     customDataPath = mkxp_fs::normalizePath(prefPath(dataPathOrg.c_str(), dataPathApp.c_str()).c_str(), 0, 1);
     
     if (rgssVersion == 0) {
-        /* Try to guess RGSS version based on Data/Scripts extension */
+        // Try to guess RGSS version based on Data/Scripts extension
         rgssVersion = 1;
         
         if (!game.scripts.empty()) {
@@ -447,6 +448,20 @@ void Config::readGameINI() {
                 rgssVersion = 3;
         }
     }
+    */
+
+    // Hardcode game and RGSS version settings for only modshot
+    rgssVersion = 1;
+    game.title = "OneShot";
+    game.scripts = "Data/xScripts.rxdata";
+
+    if (dataPathOrg.empty())
+        dataPathOrg = ".";
+
+    if (dataPathApp.empty())
+        dataPathApp = game.title;
+
+    customDataPath = mkxp_fs::normalizePath(prefPath(dataPathOrg.c_str(), dataPathApp.c_str()).c_str(), 0, 1);
     
     setupScreenSize(*this);
 }

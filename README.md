@@ -1,3 +1,8 @@
+### What is this?
+
+This is a fork of mkxp-z that contains (most) of the functionality of modshot/mkxp-oneshot.
+Feel free to use this in place of modshot, but do be aware that theres some fading memory specific code not present in modshot.
+
 # mkxp-z
 
 <p align="center"><b>

@@ -41,13 +41,13 @@ CMAKE_ARGS := \
 
 # TODO: Check if we can disable rubygems, remove prefixes.
 RUBY_CONFIGURE_ARGS := \
-	--enable-install-static-library \
 	--enable-shared \
-	--disable-install-doc \
-	--with-out-ext=openssl,readline,dbm,gdbm \
-	--with-static-linked-ext \
-	--disable-rubygems \
-	--without-gmp
+	--disable-install-doc
+#	--enable-install-static-library \
+#	--with-out-ext=openssl,readline,dbm,gdbm \
+#	--with-static-linked-ext \
+#	--disable-rubygems \
+#	--without-gmp
 
 CONFIGURE := $(CONFIGURE_ENV) ./configure $(CONFIGURE_ARGS)
 AUTOGEN   := $(CONFIGURE_ENV) ./autogen.sh $(CONFIGURE_ARGS)
@@ -337,7 +337,7 @@ $(DOWNLOADS)/ruby/configure: $(DOWNLOADS)/ruby/configure.ac
 	cd $(DOWNLOADS)/ruby; autoreconf -i
 
 $(DOWNLOADS)/ruby/configure.ac:
-	$(CLONE) $(GITHUB)/mkxp-z/ruby $(DOWNLOADS)/ruby --single-branch --branch mkxp-z-3.1.3 --depth 1;
+	$(CLONE) $(GITHUB)/ruby/ruby $(DOWNLOADS)/ruby --single-branch --branch v3_1_4 --depth 1;
 
 # ====
 init_dirs:
