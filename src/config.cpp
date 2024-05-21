@@ -175,7 +175,7 @@ void Config::read(int argc, char *argv[]) {
         {"enableSettings", true},
         {"allowSymlinks", false},
         {"dataPathOrg", ""},
-        {"dataPathApp", ""},
+        {"dataPathApp", "OneShot"},
         {"iconPath", ""},
         {"execName", "oneshot"},
         {"midiSoundFont", ""},
