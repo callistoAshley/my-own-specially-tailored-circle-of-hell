@@ -12,6 +12,7 @@ pixman = dependency('pixman-1', static: build_static)
 png = dependency('libpng', static: build_static)
 zlib = dependency('zlib', static: build_static)
 uchardet = dependency('uchardet', static: build_static)
+cppzmq = dependency('cppzmq', static: true)
 
 # As no pkg-config file is generated for static sdl2_image, and pkg-config is
 # the default option for meson detecting dependencies, pkg-config will fail to
@@ -97,7 +98,7 @@ global_include_dirs += include_directories('.',
     'util', 'util/sigslot', 'util/sigslot/adapter'
 )
 
-global_dependencies += [openal, zlib, bz2, sdl2, sdl_sound, pixman, physfs, theora, vorbisfile, vorbis, ogg, sdl2_ttf, freetype, sdl2_image, png, iconv, uchardet]
+global_dependencies += [openal, zlib, bz2, sdl2, sdl_sound, pixman, physfs, theora, vorbisfile, vorbis, ogg, sdl2_ttf, freetype, sdl2_image, png, iconv, uchardet, cppzmq]
 if host_system == 'windows'
     global_dependencies += compilers['cpp'].find_library('wsock32')
 elif host_system == 'linux'

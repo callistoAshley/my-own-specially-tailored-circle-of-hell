@@ -1,4 +1,4 @@
-project('mkxp-z', 'c', 'cpp', version: '2.4.2', meson_version: '>=0.56.0', default_options: ['cpp_std=c++14', 'buildtype=release'])
+project('mkxp-z', 'c', 'cpp', version: '2.4.2', meson_version: '>=0.56.0', default_options: ['cpp_std=c++17', 'buildtype=release'])
 
 host_system = host_machine.system()
 
@@ -119,6 +119,7 @@ subdir('src')
 subdir('binding')
 subdir('shader')
 subdir('assets')
+subdir('journal')
 
 global_include_dirs += include_directories('src', 'binding')
 

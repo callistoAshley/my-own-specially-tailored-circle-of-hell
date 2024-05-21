@@ -1,0 +1,59 @@
+sdl3 = dependency('SDL3', static: true) # compilers['cpp'].find_library('SDL3', static: true)
+cppzmq = dependency('cppzmq', static: false)
+
+embedded_assets = [
+    'clover.png',
+    'niko1.png',
+    'niko2.png',
+    'niko3.png'
+]
+embedded_assets_f = files(embedded_assets)
+
+sources = []
+
+count = 0
+foreach file : embedded_assets_f
+    sources += custom_target(embedded_assets[count],
+    input: file,
+    output: '@0@.xxd'.format(embedded_assets[count]),
+    command: [
+        xxd, '-i', '@INPUT@'
+    ],
+    capture: true,
+    depend_files: embedded_assets_f[count]
+    )
+    count += 1
+endforeach
+
+sources += 'journal.cpp'
+
+if host_system == 'windows'
+    win = import('windows')
+
+    res = files(
+        'resource.h',
+        'icon.ico',
+    )
+
+    sources += win.compile_resources('resource.rc', depend_files: res)
+endif
+
+link_args = [
+    '-static-libgcc', '-static-libstdc++', '-Wl,-Bstatic', '-lgcc', '-lstdc++', '-lpthread', 
+]
+
+args = ['-DZMQ_STATIC']
+
+executable(
+    meson.project_name() + '-journal',
+    sources: sources,
+    dependencies: [sdl3, cppzmq],
+    link_args: link_args,
+    win_subsystem: 'windows',
+    include_directories: include_directories('stb', 'common'),
+    cpp_args: args,
+    objc_args: args,
+    objcpp_args: args
+)
+
+global_include_dirs += include_directories('common')

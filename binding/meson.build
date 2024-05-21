@@ -36,6 +36,8 @@ binding_source = [files(
     'http-binding.cpp',
     'oneshot-binding.cpp',
     'oneshot-steam-binding.cpp',
+    'oneshot-niko-binding.cpp',
+    'oneshot-journal-binding.cpp',
 )]
 
 if steamworks == true

@@ -339,6 +339,45 @@ $(DOWNLOADS)/ruby/configure: $(DOWNLOADS)/ruby/configure.ac
 $(DOWNLOADS)/ruby/configure.ac:
 	$(CLONE) $(GITHUB)/ruby/ruby $(DOWNLOADS)/ruby --single-branch --branch v3_1_4 --depth 1;
 
+sdl3: init_dirs $(LIBDIR)/libSDL3.a
+
+$(LIBDIR)/libSDL3.a: $(DOWNLOADS)/sdl3/cmakebuild/Makefile
+	cd $(DOWNLOADS)/sdl3/cmakebuild; \
+	$(MAKE) -j$(NPROC); $(MAKE) install
+
+$(DOWNLOADS)/sdl3/cmakebuild/Makefile: $(DOWNLOADS)/sdl3/CMakeLists.txt
+	cd $(DOWNLOADS)/sdl3; mkdir -p cmakebuild; cd cmakebuild; \
+	$(CMAKE) -DSDL_STATIC=1 -DSDL_SHARED=0
+
+$(DOWNLOADS)/sdl3/CMakeLists.txt:
+	$(CLONE) --branch prerelease-3.1.1 $(GITHUB)/libsdl-org/SDL $(DOWNLOADS)/sdl3
+
+libzmq: init_dirs $(LIBDIR)/libzmq.a
+
+$(LIBDIR)/libzmq.a: $(DOWNLOADS)/libzmq/cmakebuild/Makefile
+	cd $(DOWNLOADS)/libzmq/cmakebuild; \
+	$(MAKE) -j$(NPROC); $(MAKE) install
+
+$(DOWNLOADS)/libzmq/cmakebuild/Makefile: $(DOWNLOADS)/libzmq/CMakeLists.txt
+	cd $(DOWNLOADS)/libzmq; mkdir -p cmakebuild; cd cmakebuild; \
+	$(CMAKE) -DWITH_TLS=OFF -DWITH_LIBBSD=OFF -DBUILD_SHARED=0
+
+$(DOWNLOADS)/libzmq/CMakeLists.txt:
+	$(CLONE) --branch v4.3.5 $(GITHUB)/zeromq/libzmq $(DOWNLOADS)/libzmq
+
+cppzmq: init_dirs libzmq $(INCLUDEDIR)/zmq.hpp
+
+$(INCLUDEDIR)/zmq.hpp: $(DOWNLOADS)/cppzmq/cmakebuild/Makefile
+	cd $(DOWNLOADS)/cppzmq/cmakebuild; \
+	$(MAKE) -j$(NPROC); $(MAKE) install
+
+$(DOWNLOADS)/cppzmq/cmakebuild/Makefile: $(DOWNLOADS)/cppzmq/CMakeLists.txt
+	cd $(DOWNLOADS)/cppzmq; mkdir -p cmakebuild; cd cmakebuild; \
+	$(CMAKE) -DCPPZMQ_BUILD_TESTS=off
+
+$(DOWNLOADS)/cppzmq/CMakeLists.txt:
+	$(CLONE) --branch v4.10.0 $(GITHUB)/zeromq/cppzmq $(DOWNLOADS)/cppzmq
+
 # ====
 init_dirs:
 	@mkdir -p $(LIBDIR) $(INCLUDEDIR)
@@ -348,5 +387,5 @@ powerwash: clean-downloads
 clean-downloads:
 	-rm -rf downloads
 
-deps-core: libtheora libvorbis pixman libpng physfs sdl2 sdl2image sdlsound sdl2ttf openal openssl fluidsynth uchardet iconv
+deps-core: libtheora libvorbis pixman libpng physfs sdl2 sdl2image sdlsound sdl2ttf openal openssl fluidsynth uchardet iconv cppzmq sdl3
 everything: deps-core ruby
