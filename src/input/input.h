@@ -100,6 +100,8 @@ public:
 	int mouseY();
     int scrollV();
     bool mouseInWindow();
+
+    bool hasQuit();
     
     bool getControllerConnected();
     const char *getControllerName();

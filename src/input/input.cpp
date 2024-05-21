@@ -726,6 +726,8 @@ struct InputPrivate
     {
         int active;
     } dir8Data;
+
+    bool triedExit;
     
     void recalcRepeatTime(unsigned int fps) {
         // 0 fps would cause a divide by zero segfault later.
@@ -782,6 +784,8 @@ struct InputPrivate
         dir8Data.active = 0;
         
         vScrollDistance = 0;
+
+        triedExit = false;
     }
     
     inline ButtonState &getStateCheck(int code)
@@ -1258,6 +1262,11 @@ void Input::update()
     p->vScrollDistance = SDL_AtomicSet(&EventThread::verticalScrollDistance, 0);
     
     p->last_update = shState->runTime();
+
+
+	RGSSThreadData &rtData = shState->rtData();
+	p->triedExit = rtData.triedExit;
+	rtData.triedExit.clear();
 }
 
 std::vector<std::string> Input::getBindings(ButtonCode code) {
@@ -1528,4 +1537,9 @@ const char *Input::getButtonName(SDL_GameControllerButton button) {
 Input::~Input()
 {
     delete p;
+}
+
+bool Input::hasQuit()
+{
+	return p->triedExit;
 }

@@ -23,6 +23,7 @@
 #define GRAPHICS_H
 
 #include "util.h"
+#include "gl-util.h"
 
 class Scene;
 class Bitmap;
@@ -94,6 +95,8 @@ public:
 	 * if "checkReset" */
 	void repaintWait(const AtomicFlag &exitCond,
 	                 bool checkReset = true);
+
+		const TEX::ID &obscuredTex() const;
     
     void lock(bool force = false);
     void unlock(bool force = false);

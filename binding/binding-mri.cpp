@@ -1247,6 +1247,9 @@ static void mriBindingExecute() {
         showExc(exc, btData);
     
     ruby_cleanup(0);
+
+    // Force allow exit
+	shState->rtData().allowExit.set();
     
     shState->rtData().rqTermAck.set();
 }

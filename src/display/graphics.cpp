@@ -832,6 +832,8 @@ struct GraphicsPrivate {
     /* Global list of all live Disposables
      * (disposed on reset) */
     IntruList<Disposable> dispList;
+
+    TEX::ID obscuredTex;
     
     GraphicsPrivate(RGSSThreadData *rtData)
     : scResLores(DEF_SCREEN_W, DEF_SCREEN_H),
@@ -866,6 +868,12 @@ struct GraphicsPrivate {
         screenQuad.setTexPosRect(screenRect, screenRect);
         
         fpsLimiter.resetFrameAdjust();
+
+        obscuredTex = TEX::gen();
+        TEX::bind(obscuredTex);
+        TEX::setRepeat(false);
+        TEX::setSmooth(false);
+		gl.TexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE8, 640, 480, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, 0);
     }
     
     ~GraphicsPrivate() {
@@ -1040,6 +1048,12 @@ struct GraphicsPrivate {
     }
     
     void redrawScreen() {
+        if (shState->oneshot().obscuredDirty)
+        {
+            TEX::bind(obscuredTex);
+            TEX::uploadSubImage(0, 0, 640, 480, shState->oneshot().obscuredMap().data(), GL_LUMINANCE);
+            shState->oneshot().obscuredDirty = false;
+        }
         screen.composite();
         
         // maybe unspaghetti this later
@@ -1221,6 +1235,8 @@ void Graphics::update(bool checkForShutdown) {
             p->fpsLimiter.resetFrameAdjust();
         }
     }
+
+    shState->oneshot().update();
     
     p->checkResize();
     p->redrawScreen();
@@ -1289,6 +1305,8 @@ void Graphics::transition(int duration, const char *filename, int vague) {
     glState.blend.pushSet(false);
     
     for (int i = 0; i < duration; ++i) {
+        shState->input().update(); // oneshot does this for some reason
+
         /* We need to clean up transMap properly before
          * a possible longjmp, so we manually test for
          * shutdown/reset here */
@@ -1317,6 +1335,10 @@ void Graphics::transition(int duration, const char *filename, int vague) {
             simpleShader.bind();
             simpleShader.setProg(prog);
         }
+
+        // fade out window
+        if (p->threadData->exiting)
+            SDL_SetWindowOpacity(p->threadData->window, 1.0 - prog);
         
         /* Draw the composed frame to a buffer first
          * (we need this because we're skipping PingPong) */
@@ -1766,3 +1788,8 @@ void Graphics::addDisposable(Disposable *d) { p->dispList.append(d->link); }
 void Graphics::remDisposable(Disposable *d) { p->dispList.remove(d->link); }
 
 #undef GRAPHICS_THREAD_LOCK
+
+const TEX::ID &Graphics::obscuredTex() const
+{
+	return p->obscuredTex;
+}

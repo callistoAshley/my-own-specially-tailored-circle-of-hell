@@ -292,7 +292,11 @@ void EventThread::process(RGSSThreadData &rtData)
                         break;
                         
                     case SDL_WINDOWEVENT_CLOSE :
-                        terminate = true;
+                        if (rtData.allowExit) {
+                            terminate = true;
+                        } else {
+                            rtData.triedExit.set();
+                        }
                         
                         break;
                         
@@ -320,8 +324,12 @@ void EventThread::process(RGSSThreadData &rtData)
                 break;
                 
             case SDL_QUIT :
-                terminate = true;
-                Debug() << "EventThread termination requested";
+                if (rtData.allowExit) {
+                    terminate = true;
+                    Debug() << "EventThread termination requested";
+                } else {
+                    rtData.triedExit.set();
+                }
                 
                 break;
                 
@@ -658,6 +666,18 @@ int EventThread::eventFilter(void *data, SDL_Event *event)
         case SDL_APP_LOWMEMORY :
             Debug() << "SDL_APP_LOWMEMORY";
             return 0;
+        /* Workaround for Windows pausing on drag */
+        case SDL_WINDOWEVENT:
+            if (event->window.event == SDL_WINDOWEVENT_MOVED)
+            {
+                if (shState != NULL && shState->rgssVersion > 0)
+                {
+                    shState->oneshot().setWindowPos(event->window.data1, event->window.data2);
+                    shState->graphics().update(false);
+                }
+                return 0;
+            }
+            return 1;
             
             //	case SDL_RENDER_TARGETS_RESET :
             //		Debug() << "****** SDL_RENDER_TARGETS_RESET";
