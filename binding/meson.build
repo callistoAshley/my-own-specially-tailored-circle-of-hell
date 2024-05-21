@@ -35,6 +35,7 @@ binding_source = [files(
     'tilemapvx-binding.cpp',
     'http-binding.cpp',
     'oneshot-binding.cpp',
+    'oneshot-steam-binding.cpp',
 )]
 
 if steamworks == true

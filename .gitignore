@@ -78,3 +78,5 @@ DerivedData/
 
 # clangd
 /.cache 
+
+/steamworks
