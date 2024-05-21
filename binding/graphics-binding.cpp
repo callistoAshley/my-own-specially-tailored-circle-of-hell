@@ -21,6 +21,7 @@
 
 #include "config.h"
 #include "graphics.h"
+#include "ruby/internal/special_consts.h"
 #include "sharedstate.h"
 #include "binding-util.h"
 #include "binding-types.h"
@@ -426,4 +427,7 @@ void graphicsBindingInit()
     INIT_GRA_PROP_BIND( IntegerScaling,   "integer_scaling"    );
     INIT_GRA_PROP_BIND( LastMileScaling,  "last_mile_scaling"  );
     INIT_GRA_PROP_BIND( Threadsafe,       "thread_safe"        );
+
+    _rb_define_module_function(module, "smooth", graphicsGetSmoothScaling);
+    _rb_define_module_function(module, "smooth=", graphicsSetSmoothScaling);
 }
