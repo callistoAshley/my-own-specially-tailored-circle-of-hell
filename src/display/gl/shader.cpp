@@ -61,6 +61,7 @@
 #include "blurH.vert.xxd"
 #include "blurV.vert.xxd"
 #include "tilemapvx.vert.xxd"
+#include "obscured.frag.xxd"
 #endif
 
 #ifdef MKXPZ_BUILD_XCODE
@@ -869,3 +870,17 @@ void XbrzShader::setTargetScale(const Vec2 &value)
 	gl.Uniform2f(u_targetScale, value.x, value.y);
 }
 #endif
+
+ObscuredShader::ObscuredShader()
+{
+	INIT_SHADER(simple, obscured, ObscuredShader);
+
+	ShaderBase::init();
+
+	GET_U(obscured);
+}
+
+void ObscuredShader::setObscured(const TEX::ID value)
+{
+	setTexUniform(u_obscured, 1, value);
+}

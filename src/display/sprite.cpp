@@ -79,6 +79,8 @@ struct SpritePrivate
     /* Would this sprite be visible on
      * the screen if drawn? */
     bool isVisible;
+
+    bool obscured;
     
     Color *color;
     Tone *tone;
@@ -388,6 +390,7 @@ DEF_ATTR_SIMPLE(Sprite, PatternScrollY, int, p->patternScroll.y)
 DEF_ATTR_SIMPLE(Sprite, PatternZoomX, float, p->patternZoom.x)
 DEF_ATTR_SIMPLE(Sprite, PatternZoomY, float, p->patternZoom.y)
 DEF_ATTR_SIMPLE(Sprite, Invert,      bool,    p->invert)
+DEF_ATTR_SIMPLE(Sprite, Obscured,    bool,    p->obscured)
 
 void Sprite::setBitmap(Bitmap *bitmap)
 {
@@ -664,7 +667,15 @@ void Sprite::draw()
         scalingMethod = shState->config().bitmapSmoothScaling;
     }
 
-    if (renderEffect)
+	if (p->obscured)
+	{
+		ObscuredShader &shader = shState->shaders().obscured;
+		shader.bind();
+		shader.applyViewportProj();
+		shader.setObscured(shState->graphics().obscuredTex());
+		base = &shader;
+	}
+    else if (renderEffect)
     {
         if (scalingMethod != NearestNeighbor)
         {

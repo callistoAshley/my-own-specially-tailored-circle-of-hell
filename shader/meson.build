@@ -26,7 +26,8 @@ embedded_shaders = [
     'blur.frag',
     'blurH.vert',
     'blurV.vert',
-    'simpleMatrix.vert'
+    'simpleMatrix.vert',
+    'obscured.frag',
 ]
 
 # xBRZ shader is GPLv3.

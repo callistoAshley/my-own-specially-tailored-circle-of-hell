@@ -84,6 +84,8 @@ DEF_GFX_PROP_B(Sprite, Mirror)
 DEF_GFX_PROP_B(Sprite, PatternTile)
 DEF_GFX_PROP_B(Sprite, Invert)
 
+DEF_GFX_PROP_B(Sprite, Obscured)
+
 RB_METHOD(spriteWidth) {
     RB_UNUSED_PARAM;
     
@@ -155,4 +157,7 @@ void spriteBindingInit() {
     INIT_PROP_BIND(Sprite, WaveLength, "wave_length");
     INIT_PROP_BIND(Sprite, WaveSpeed, "wave_speed");
     INIT_PROP_BIND(Sprite, WavePhase, "wave_phase");
+
+    INIT_PROP_BIND( Sprite, Obscured,  "obscured"   );
 }
+

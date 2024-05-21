@@ -398,6 +398,18 @@ protected:
 	GLint u_targetScale;
 };
 
+/* Obscured graphic */
+class ObscuredShader : public ShaderBase
+{
+public:
+	ObscuredShader();
+
+	void setObscured(const TEX::ID value);
+
+private:
+	GLint u_obscured;
+};
+
 /* Global object containing all available shaders */
 struct ShaderSet
 {
@@ -421,6 +433,7 @@ struct ShaderSet
 	TilemapVXShader tilemapVX;
 	BicubicShader bicubic;
 	Lanczos3Shader lanczos3;
+	ObscuredShader obscured;
 #ifdef MKXPZ_SSL
 	XbrzShader xbrz;
 #endif
