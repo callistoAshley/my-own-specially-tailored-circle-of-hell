@@ -43,14 +43,14 @@
 
 #ifndef MKXPZ_BUILD_XCODE
 #ifndef MKXPZ_CJK_FONT
-#include "liberation.ttf.xxd"
+#include "terminus.ttf.xxd"
 #else
 #include "wqymicrohei.ttf.xxd"
 #endif
 
 
 #ifndef MKXPZ_CJK_FONT
-#define BUNDLED_FONT liberation
+#define BUNDLED_FONT terminus
 #else
 #define BUNDLED_FONT wqymicrohei
 #endif
@@ -59,7 +59,7 @@
 	extern unsigned char ___assets_##FONT##_ttf[]; \
 	extern unsigned int ___assets_##FONT##_ttf_len;
 
-BUNDLED_FONT_DECL(liberation)
+BUNDLED_FONT_DECL(terminus)
 
 #define BUNDLED_FONT_D(f) ___assets_## f ##_ttf
 #define BUNDLED_FONT_L(f) ___assets_## f ##_ttf_len
@@ -75,7 +75,7 @@ static SDL_RWops *openBundledFont()
 #ifndef MKXPZ_BUILD_XCODE
     return SDL_RWFromConstMem(BNDL_F_D(BUNDLED_FONT), BNDL_F_L(BUNDLED_FONT));
 #else
-    return SDL_RWFromFile(mkxp_fs::getPathForAsset("Fonts/liberation", "ttf").c_str(), "rb");
+    return SDL_RWFromFile(mkxp_fs::getPathForAsset("Fonts/terminus", "ttf").c_str(), "rb");
 #endif
 }
 

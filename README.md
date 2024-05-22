@@ -55,7 +55,7 @@ Technically, while SDL itself might support these buttons, the keybinding menu h
 
 In the RMXP version of RGSS, fonts are loaded directly from system specific search paths (meaning they must be installed to be available to games). Because this whole thing is a giant platform-dependent headache, Ancurio decided to implement the behavior Enterbrain thankfully added in VX Ace: loading fonts will automatically search a folder called "Fonts", which obeys the default searchpath behavior (ie. it can be located directly in the game folder, or an RTP).
 
-If a requested font is not found, no error is generated. Instead, a built-in font is used. By default, this font is Liberation Sans.
+If a requested font is not found, no error is generated. Instead, a built-in font is used. By default, this font is Terminus.
 
 ## What doesn't work
 
