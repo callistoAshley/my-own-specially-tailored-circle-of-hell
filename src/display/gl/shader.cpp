@@ -62,6 +62,10 @@
 #include "blurV.vert.xxd"
 #include "tilemapvx.vert.xxd"
 #include "obscured.frag.xxd"
+#include "crt.frag.xxd"
+#include "cubic_lens.frag.xxd"
+#include "chronos.frag.xxd"
+#include "water.frag.xxd"
 #endif
 
 #ifdef MKXPZ_BUILD_XCODE
@@ -883,4 +887,63 @@ ObscuredShader::ObscuredShader()
 void ObscuredShader::setObscured(const TEX::ID value)
 {
 	setTexUniform(u_obscured, 1, value);
+}
+
+
+ScannedShader::ScannedShader()
+{
+	INIT_SHADER(simple, crt, ScannedShader);
+
+	ShaderBase::init();
+}
+
+ChronosShader::ChronosShader()
+{
+	INIT_SHADER(simple, chronos, ChronosShader);
+
+	ShaderBase::init();
+
+	GET_U(rgbOffsetx);
+	GET_U(rgbOffsety);
+}
+
+void ChronosShader::setrgbOffset(const Vec4 ox, const Vec4 oy)
+{
+	gl.Uniform4f(u_rgbOffsetx, ox.x, ox.y, ox.z, 0);
+	gl.Uniform4f(u_rgbOffsety, oy.x, oy.y, oy.z, 0);
+}
+
+
+CubicShader::CubicShader()
+{
+	INIT_SHADER(simple, cubic_lens, CubicShader);
+
+	ShaderBase::init();
+
+	GET_U(iTime);
+}
+
+void CubicShader::setiTime(const float value)
+{
+	gl.Uniform1f(u_iTime, value);
+}
+
+WaterShader::WaterShader()
+{
+	INIT_SHADER(simple, water, WaterShader);
+
+	ShaderBase::init();
+
+	GET_U(iTime);
+	GET_U(opacity);
+}
+
+void WaterShader::setiTime(const float value)
+{
+	gl.Uniform1f(u_iTime, value);
+}
+
+void WaterShader::setOpacity(const float value)
+{
+	gl.Uniform1f(u_opacity, value);
 }

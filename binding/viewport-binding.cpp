@@ -79,6 +79,35 @@ DEF_GFX_PROP_OBJ_VAL(Viewport, Tone, Tone, "tone")
 DEF_GFX_PROP_I(Viewport, OX)
 DEF_GFX_PROP_I(Viewport, OY)
 
+
+RB_METHOD(setRGBOffset)
+{
+	double x, y, z;
+	double x2, y2, z2;
+	rb_get_args(argc, argv, "ffffff", &x, &y, &z, &x2, &y2, &z2);
+
+	Viewport *v = getPrivateData<Viewport>(self);
+
+	v->setRGBOffsetx(Vec4(x, y, z, 0));
+	v->setRGBOffsety(Vec4(x2, y2, z2, 0));
+
+	return Qnil;
+}
+
+RB_METHOD(setCubicTime)
+{
+	double time;
+	rb_get_args(argc, argv, "f", &time);
+
+	Viewport *v = getPrivateData<Viewport>(self);
+
+	v->setCubicTime(time);
+
+	return Qnil;
+}
+
+DEF_GFX_PROP_B(Viewport, Scanned)
+
 void viewportBindingInit() {
     VALUE klass = rb_define_class("Viewport", rb_cObject);
 #if RAPI_FULL > 187
@@ -98,4 +127,8 @@ void viewportBindingInit() {
     INIT_PROP_BIND(Viewport, OY, "oy");
     INIT_PROP_BIND(Viewport, Color, "color");
     INIT_PROP_BIND(Viewport, Tone, "tone");
+
+    _rb_define_method(klass, "setRGBOffset", setRGBOffset);
+	_rb_define_method(klass, "setCubicTime", setCubicTime);
+    INIT_PROP_BIND( Viewport, Scanned, "scanned");
 }

@@ -525,7 +525,7 @@ public:
         }
     }
     
-    void requestViewportRender(const Vec4 &c, const Vec4 &f, const Vec4 &t) {
+    void requestViewportRender(const Vec4 &c, const Vec4 &f, const Vec4 &t, const bool s, const Vec4 rx, const Vec4 ry, const float cubic) {
         const IntRect &viewpRect = glState.scissorBox.get();
         const IntRect &screenRect = geometry.rect;
         
@@ -533,6 +533,10 @@ public:
         const bool toneGrayEffect = t.w != 0;
         const bool colorEffect = c.w > 0;
         const bool flashEffect = f.w > 0;
+
+		const bool cubicEffect = cubic != 0;
+		const bool rgbOffset = rx.xyzNotNull() || ry.xyzNotNull();
+		const bool scannedEffect = s;
         
         if (toneGrayEffect) {
             pp.swapRender();
@@ -565,6 +569,101 @@ public:
             screenQuad.draw();
             glState.blend.pop();
         }
+        
+		if (scannedEffect)
+		{
+			pp.swapRender();
+
+			if (!viewpRect.encloses(screenRect))
+			{
+				/* Scissor test _does_ affect FBO blit operations,
+				 * and since we're inside the draw cycle, it will
+				 * be turned on, so turn it off temporarily */
+				glState.scissorTest.pushSet(false);
+
+				GLMeta::blitBegin(pp.frontBuffer());
+				GLMeta::blitSource(pp.backBuffer());
+				GLMeta::blitRectangle(geometry.rect, Vec2i());
+				GLMeta::blitEnd();
+
+				glState.scissorTest.pop();
+			}
+
+			ScannedShader &shader = shState->shaders().scanned;
+			shader.bind();
+			shader.applyViewportProj();
+			shader.setTexSize(screenRect.size());
+
+			TEX::bind(pp.backBuffer().tex);
+
+			glState.blend.pushSet(false);
+			screenQuad.draw();
+			glState.blend.pop();
+		}
+        
+        if (cubicEffect)
+		{
+			pp.swapRender();
+
+			if (!viewpRect.encloses(screenRect))
+			{
+				/* Scissor test _does_ affect FBO blit operations,
+				 * and since we're inside the draw cycle, it will
+				 * be turned on, so turn it off temporarily */
+				glState.scissorTest.pushSet(false);
+
+				GLMeta::blitBegin(pp.frontBuffer());
+				GLMeta::blitSource(pp.backBuffer());
+				GLMeta::blitRectangle(geometry.rect, Vec2i());
+				GLMeta::blitEnd();
+
+				glState.scissorTest.pop();
+			}
+
+			CubicShader &shader = shState->shaders().cubic;
+			shader.bind();
+			shader.setiTime(cubic);
+			shader.applyViewportProj();
+			shader.setTexSize(screenRect.size());
+
+			TEX::bind(pp.backBuffer().tex);
+
+			glState.blend.pushSet(false);
+			screenQuad.draw();
+			glState.blend.pop();
+		}
+
+		if (rgbOffset)
+		{
+			pp.swapRender();
+
+			if (!viewpRect.encloses(screenRect))
+			{
+				/* Scissor test _does_ affect FBO blit operations,
+				 * and since we're inside the draw cycle, it will
+				 * be turned on, so turn it off temporarily */
+				glState.scissorTest.pushSet(false);
+
+				GLMeta::blitBegin(pp.frontBuffer());
+				GLMeta::blitSource(pp.backBuffer());
+				GLMeta::blitRectangle(geometry.rect, Vec2i());
+				GLMeta::blitEnd();
+
+				glState.scissorTest.pop();
+			}
+
+			ChronosShader &shader = shState->shaders().chronos;
+			shader.bind();
+			shader.setrgbOffset(rx, ry);
+			shader.applyViewportProj();
+			shader.setTexSize(screenRect.size());
+
+			TEX::bind(pp.backBuffer().tex);
+
+			glState.blend.pushSet(false);
+			screenQuad.draw();
+			glState.blend.pop();
+		}
         
         if (!toneRGBEffect && !colorEffect && !flashEffect)
             return;

@@ -57,6 +57,7 @@ DEF_GFX_PROP_I(Plane, BlendType)
 
 DEF_GFX_PROP_F(Plane, ZoomX)
 DEF_GFX_PROP_F(Plane, ZoomY)
+DEF_GFX_PROP_F(Plane, WaterTime)
 
 void planeBindingInit() {
   VALUE klass = rb_define_class("Plane", rb_cObject);
@@ -80,4 +81,5 @@ void planeBindingInit() {
   INIT_PROP_BIND(Plane, BlendType, "blend_type");
   INIT_PROP_BIND(Plane, Color, "color");
   INIT_PROP_BIND(Plane, Tone, "tone");
+  INIT_PROP_BIND(Plane, WaterTime, "waterTime");
 }

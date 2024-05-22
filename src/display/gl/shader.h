@@ -410,6 +410,47 @@ private:
 	GLint u_obscured;
 };
 
+class ScannedShader : public ShaderBase
+{
+public: 
+	ScannedShader();
+};
+
+class ChronosShader : public ShaderBase
+{
+public:
+	ChronosShader();
+
+	void setrgbOffset(const Vec4 rx, const Vec4 ry);
+
+private:
+	GLint u_rgbOffsetx;
+	GLint u_rgbOffsety;
+};
+
+class CubicShader : public ShaderBase
+{
+public:
+	CubicShader();
+
+	void setiTime(const float value);
+
+private:
+	GLint u_iTime;
+};
+
+class WaterShader : public ShaderBase
+{
+public:
+	WaterShader();
+
+	void setiTime(const float value);
+	void setOpacity(const float opacity);
+
+private:
+	GLint u_iTime, u_opacity;
+};
+
 /* Global object containing all available shaders */
 struct ShaderSet
 {
@@ -434,6 +475,10 @@ struct ShaderSet
 	BicubicShader bicubic;
 	Lanczos3Shader lanczos3;
 	ObscuredShader obscured;
+	ScannedShader scanned;
+	ChronosShader chronos;
+	CubicShader cubic;
+	WaterShader water;
 #ifdef MKXPZ_SSL
 	XbrzShader xbrz;
 #endif
