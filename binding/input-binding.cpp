@@ -26,6 +26,7 @@
 #include "eventthread.h"
 
 #include "binding-util.h"
+#include "ruby/internal/intern/array.h"
 #include "ruby/internal/intern/string.h"
 #include "ruby/internal/intern/variable.h"
 #include "ruby/internal/special_consts.h"
@@ -650,6 +651,74 @@ RB_METHOD(inputStopTextInputCompat) {
     return Qnil;
 }
 
+// TODO
+RB_METHOD(inputCompatGetAllPressed)
+{
+    RB_UNUSED_PARAM;
+
+    return rb_ary_new();
+}
+
+RB_METHOD(inputCompatGetAllTriggered)
+{
+    RB_UNUSED_PARAM;
+
+    return rb_ary_new();
+}
+
+RB_METHOD(inputCompatGetAllRepeated)
+{
+    RB_UNUSED_PARAM;
+
+    return rb_ary_new();
+}
+
+RB_METHOD(inputCompatSetAllPressedUnPressed)
+{
+    RB_UNUSED_PARAM;
+
+    return Qnil;
+}
+
+RB_METHOD(inputCompatSetAllUnPressed)
+{
+    RB_UNUSED_PARAM;
+
+    return Qnil;
+}
+
+RB_METHOD(inputCompatSetKey)
+{
+	RB_UNUSED_PARAM;
+
+	return Qnil;
+}
+
+RB_METHOD(inputCompatUnsetKey)
+{
+	RB_UNUSED_PARAM;
+
+	return Qnil;
+}
+RB_METHOD(inputCompatSetKeyPressed)
+{
+	RB_UNUSED_PARAM;
+
+	return Qnil;
+}
+RB_METHOD(inputCompatSetKeyTriggered)
+{
+	RB_UNUSED_PARAM;
+
+	return Qnil;
+}
+RB_METHOD(inputCompatSetKeyRepeated)
+{
+	RB_UNUSED_PARAM;
+
+	return Qnil;
+}
+
 void inputBindingInit() {
     VALUE module = rb_define_module("Input");
     
@@ -731,6 +800,18 @@ void inputBindingInit() {
             rb_const_set(module, sym, val);
         }
     }
+
+	_rb_define_module_function(module, "get_all_pressed", inputCompatGetAllPressed);
+	_rb_define_module_function(module, "get_all_triggered", inputCompatGetAllTriggered);
+	_rb_define_module_function(module, "get_all_repeated", inputCompatGetAllRepeated);
+	_rb_define_module_function(module, "set_all_pressed_unpressed", inputCompatSetAllPressedUnPressed);
+	_rb_define_module_function(module, "set_all_unpressed", inputCompatSetAllUnPressed);
+	_rb_define_module_function(module, "set_key", inputCompatSetKey);
+	_rb_define_module_function(module, "unset_key", inputCompatUnsetKey);
+
+	_rb_define_module_function(module, "set_key_pressed", inputCompatSetKeyPressed);
+	_rb_define_module_function(module, "set_key_repeated", inputCompatSetKeyRepeated);
+	_rb_define_module_function(module, "set_key_triggered", inputCompatSetKeyTriggered);
 
     BIND_SDL_SCANCODE(UNKNOWN)
 	BIND_SDL_SCANCODE(BACKSPACE)
