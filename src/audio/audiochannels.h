@@ -42,8 +42,8 @@ class AudioChannels {
 	float getPitch(unsigned int id);
 	float playingOffset(unsigned int id);
 	ALStream::State queryState(unsigned int id);
-	// void setALFilter(unsigned int id, AL::Filter::ID filter);
-	// void setALEffect(unsigned int id, ALuint effect);
+	void setALFilter(unsigned int id, AL::Filter::ID filter);
+	void setALEffect(unsigned int id, ALuint effect);
 
     private:
     std::vector<AudioStream*> streams;

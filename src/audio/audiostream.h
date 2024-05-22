@@ -149,8 +149,14 @@ struct AudioStream
 	void setPitch(float value);
 	float getPitch();
 
+	void setALFilter(AL::Filter::ID filter);
+	void setALEffect(ALuint effect);
+
 private:
 	float volumes[VolumeTypeCount];
+	AL::AuxiliaryEffectSlot::ID effectSlot;
+	AL::Filter::ID curfilter = AL::Filter::ID(AL_FILTER_NULL);
+	ALuint cureffect = AL_EFFECT_NULL;
 	void updateVolume();
 
 	void finiFadeOutInt();

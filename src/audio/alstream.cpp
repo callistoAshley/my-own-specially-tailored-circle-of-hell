@@ -485,3 +485,7 @@ void ALStream::streamData()
 		SDL_Delay(AUDIO_SLEEP);
 	}
 }
+
+void ALStream::setALFilter(AL::Filter::ID filter) {
+	AL::Source::setFilter(alSrc, filter);
+}

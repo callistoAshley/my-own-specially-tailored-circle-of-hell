@@ -53,6 +53,8 @@ if get_option('enable-https') == true
     endif
 endif
 
+global_args += '-DAL_ALEXT_PROTOTYPES'
+
 # Windows needs to be treated like a special needs child here
 explicit_libs = ''
 if host_system == 'windows'

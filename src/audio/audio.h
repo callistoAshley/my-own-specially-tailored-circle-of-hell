@@ -22,6 +22,8 @@
 #ifndef AUDIO_H
 #define AUDIO_H
 
+#include "al-util.h"
+
 /* Concerning the 'pos' parameter:
  *   RGSS3 actually doesn't specify a format for this,
  *   it's only implied that it is a numerical value
@@ -108,6 +110,26 @@ public:
 
 	AUDIO_H_DECL_CH_SPECIAL_FUNCS(lch)
 	AUDIO_H_DECL_CH_SPECIAL_FUNCS(ch)
+
+#define AUDIO_H_DECL_ALFILTER_FUNCS(entity) \
+	void entity##SetALFilter(AL::Filter::ID filter); \
+	void entity##ClearALFilter(); \
+	void entity##SetALEffect(ALuint effect); \
+	void entity##ClearALEffect();
+
+	AUDIO_H_DECL_ALFILTER_FUNCS(bgm)
+	AUDIO_H_DECL_ALFILTER_FUNCS(bgs)
+	AUDIO_H_DECL_ALFILTER_FUNCS(me)
+	AUDIO_H_DECL_ALFILTER_FUNCS(se)
+
+#define AUDIO_H_DECL_CH_ALFILER_FUNCS(entity) \
+	void entity##SetALFilter(unsigned int id, AL::Filter::ID filter); \
+	void entity##ClearALFilter(unsigned int id); \
+	void entity##SetALEffect(unsigned int id, ALuint effect); \
+	void entity##ClearALEffect(unsigned int id);
+
+	AUDIO_H_DECL_CH_ALFILER_FUNCS(lch)
+	AUDIO_H_DECL_CH_ALFILER_FUNCS(ch)
 
 private:
 	Audio(RGSSThreadData &rtData);

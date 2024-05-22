@@ -354,6 +354,27 @@ bool Audio::meIsPlaying()
 	return p->me.stream.queryState() == ALStream::Playing;
 }
 
+#define AUDIO_CPP_DEF_ALFILTER_FUNCS(entity) \
+	void Audio::entity##SetALFilter(AL::Filter::ID filter) { \
+		p->entity.setALFilter(filter); \
+	} \
+	\
+	void Audio::entity##ClearALFilter() { \
+		p->entity.setALFilter(AL::Filter::nullFilter()); \
+	} \
+	\
+	void Audio::entity##SetALEffect(ALuint effect) { \
+		p->entity.setALEffect(effect); \
+	} \
+	\
+	void Audio::entity##ClearALEffect() { \
+		p->entity.setALEffect(AL_EFFECT_NULL); \
+	}
+
+AUDIO_CPP_DEF_ALFILTER_FUNCS(bgm)
+AUDIO_CPP_DEF_ALFILTER_FUNCS(bgs)
+AUDIO_CPP_DEF_ALFILTER_FUNCS(me)
+AUDIO_CPP_DEF_ALFILTER_FUNCS(se)
 
 #define AUDIO_CPP_DEF_ALL_CH_FUNCS(entity) \
 	void Audio::entity##Play(unsigned int id, \
@@ -406,24 +427,23 @@ bool Audio::meIsPlaying()
 	\
 	void Audio::entity##Resize(unsigned int size) { \
 		p->entity.resize(size); \
+	} \
+	\
+	void Audio::entity##SetALFilter(unsigned int id, AL::Filter::ID filter) { \
+		p->entity.setALFilter(id, filter); \
+	} \
+	\
+    void Audio::entity##ClearALFilter(unsigned int id) { \
+		p->entity.setALFilter(id, AL::Filter::nullFilter()); \
+	} \
+	\
+  void Audio::entity##SetALEffect(unsigned int id, ALuint effect) { \
+		p->entity.setALEffect(id, effect); \
+	} \
+	\
+    void Audio::entity##ClearALEffect(unsigned int id) { \
+		p->entity.setALEffect(id, AL_EFFECT_NULL); \
 	}
-
-	// \
-	// void Audio::entity##SetALFilter(unsigned int id, AL::Filter::ID filter) { \
-	// 	p->entity.setALFilter(id, filter); \
-	// } \
-	// \
-  //   void Audio::entity##ClearALFilter(unsigned int id) { \
-	// 	p->entity.setALFilter(id, AL::Filter::nullFilter()); \
-	// } \
-	// \
-  // void Audio::entity##SetALEffect(unsigned int id, ALuint effect) { \
-	// 	p->entity.setALEffect(id, effect); \
-	// } \
-	// \
-  //   void Audio::entity##ClearALEffect(unsigned int id) { \
-	// 	p->entity.setALEffect(id, AL_EFFECT_NULL); \
-	// }
 
 AUDIO_CPP_DEF_ALL_CH_FUNCS(lch)
 AUDIO_CPP_DEF_ALL_CH_FUNCS(ch)

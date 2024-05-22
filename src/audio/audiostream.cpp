@@ -46,6 +46,8 @@ AudioStream::AudioStream(ALStream::LoopMode loopMode,
 	fadeIn.thread = 0;
 	fadeIn.threadName = std::string("audio_fadein (") + threadId + ")";
 
+	effectSlot = AL::AuxiliaryEffectSlot::gen();
+
 	streamMut = SDL_CreateMutex();
 }
 
@@ -391,4 +393,24 @@ void AudioStream::setPitch(float value)
 float AudioStream::getPitch()
 {
 	return current.pitch;
+}
+
+void AudioStream::setALFilter(AL::Filter::ID filter) {
+	lockStream();
+	stream.setALFilter(filter);
+	if(!(curfilter == filter) && !AL::Filter::isNullFilter(curfilter)) {
+		AL::Filter::del(curfilter);
+	}
+	curfilter = filter;
+	unlockStream();
+}
+
+void AudioStream::setALEffect(ALuint effect) {
+	lockStream();
+	AL::AuxiliaryEffectSlot::attachEffect(effectSlot, effect);
+	if(cureffect != effect && cureffect != AL_EFFECT_NULL) {
+		alDeleteEffects(1, &cureffect);
+	}
+	cureffect = effect;
+	unlockStream();
 }

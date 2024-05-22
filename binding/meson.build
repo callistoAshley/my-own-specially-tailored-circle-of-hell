@@ -38,6 +38,7 @@ binding_source = [files(
     'oneshot-steam-binding.cpp',
     'oneshot-niko-binding.cpp',
     'oneshot-journal-binding.cpp',
+    'modshot-aleffect-binding.cpp'
 )]
 
 if steamworks == true

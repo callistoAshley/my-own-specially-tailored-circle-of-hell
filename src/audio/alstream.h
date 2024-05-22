@@ -104,6 +104,8 @@ struct ALStream
 	float queryOffset();
 	bool queryNativePitch();
 
+	void setALFilter(AL::Filter::ID filter);
+
 private:
 	void closeSource();
 	void openSource(const std::string &filename);

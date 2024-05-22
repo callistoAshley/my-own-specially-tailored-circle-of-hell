@@ -136,16 +136,16 @@ ALStream::State AudioChannels::queryState(unsigned int id) {
     return streams[id]->stream.queryState();
 }
 
-// void AudioChannels::setALFilter(unsigned int id, AL::Filter::ID filter) {
-//     if (id >= streams.size()) {
-//         return;
-//     }
-//     streams[id]->setALFilter(filter);
-// }
+void AudioChannels::setALFilter(unsigned int id, AL::Filter::ID filter) {
+    if (id >= streams.size()) {
+        return;
+    }
+    streams[id]->setALFilter(filter);
+}
 
-// void AudioChannels::setALEffect(unsigned int id, ALuint effect) {
-//     if (id >= streams.size()) {
-//         return;
-//     }
-//     streams[id]->setALEffect(effect);
-// }
+void AudioChannels::setALEffect(unsigned int id, ALuint effect) {
+    if (id >= streams.size()) {
+        return;
+    }
+    streams[id]->setALEffect(effect);
+}
