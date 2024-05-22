@@ -72,7 +72,7 @@ void subRectImageEnd()
 	}
 }
 
-#define HAVE_NATIVE_VAO gl.GenVertexArrays
+#define HAVE_NATIVE_VAO false
 
 static void vaoBindRes(VAO &vao)
 {
