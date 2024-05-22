@@ -115,6 +115,7 @@ void oneshotWallpaperBindingTerminate();
 
 void modshotAleffectBindingInit();
 void modshotwindowBindingInit();
+void modshotSystemBindingInit();
 
 RB_METHOD(mkxpDelta);
 RB_METHOD(mriPrint);
@@ -205,6 +206,7 @@ static void mriBindingInit() {
 
     modshotAleffectBindingInit();
     modshotwindowBindingInit();
+    modshotSystemBindingInit();
     
     if (rgssVer >= 3) {
         _rb_define_module_function(rb_mKernel, "rgss_main", mriRgssMain);

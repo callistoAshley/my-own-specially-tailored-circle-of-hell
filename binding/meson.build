@@ -41,6 +41,7 @@ binding_source = [files(
     'oneshot-wallpaper-binding.cpp',
     'modshot-aleffect-binding.cpp',
     'modshot-window-binding.cpp',
+    'modshot-system-binding.cpp',
 )]
 
 if steamworks == true
