@@ -22,6 +22,7 @@
 #include "binding-util.h"
 
 #include "exception.h"
+#include "ruby/internal/core/rstring.h"
 #include "sharedstate.h"
 #include "src/util/util.h"
 
@@ -132,8 +133,7 @@ int rb_get_args(int argc, VALUE *argv, const char *format, ...) {
       VALUE *str = va_arg(ap, VALUE *);
       VALUE tmp = *arg;
 
-      if (!RB_TYPE_P(tmp, RUBY_T_STRING))
-        rb_raise(rb_eTypeError, "Argument %d: Expected string", argI);
+      tmp = rb_str_to_str(tmp);
 
       *str = tmp;
       ++argI;
@@ -150,8 +150,7 @@ int rb_get_args(int argc, VALUE *argv, const char *format, ...) {
 
       VALUE tmp = *arg;
 
-      if (!RB_TYPE_P(tmp, RUBY_T_STRING))
-        rb_raise(rb_eTypeError, "Argument %d: Expected string", argI);
+      tmp = rb_str_to_str(tmp);
 
       *s = RSTRING_PTR(tmp);
       *len = RSTRING_LEN(tmp);
@@ -168,8 +167,7 @@ int rb_get_args(int argc, VALUE *argv, const char *format, ...) {
 
       VALUE tmp = *arg++;
 
-      if (!RB_TYPE_P(tmp, RUBY_T_STRING))
-        rb_raise(rb_eTypeError, "Argument %d: Expected string", argI);
+      tmp = rb_str_to_str(tmp);
 
       *s = RSTRING_PTR(tmp);
       ++argI;
