@@ -182,7 +182,7 @@ void Config::read(int argc, char *argv[]) {
         {"midiChorus", false},
         {"midiReverb", false},
         {"SESourceCount", 6},
-        {"BGMTrackCount", 1},
+        {"AudioChannels", 8},
         {"customScript", ""},
         {"pathCache", true},
         {"useScriptNames", true},
@@ -310,7 +310,7 @@ try { exp } catch (...) {}
     SET_OPT_CUSTOMKEY(midi.chorus, midiChorus, boolean);
     SET_OPT_CUSTOMKEY(midi.reverb, midiReverb, boolean);
     SET_OPT_CUSTOMKEY(SE.sourceCount, SESourceCount, integer);
-    SET_OPT_CUSTOMKEY(BGM.trackCount, BGMTrackCount, integer);
+    SET_OPT_CUSTOMKEY(audioChannels, AudioChannels, integer);
     SET_STRINGOPT(customScript, customScript);
     SET_OPT(useScriptNames, boolean);
     SET_OPT(dumpAtlas, boolean);
@@ -338,7 +338,6 @@ try { exp } catch (...) {}
     
     rgssVersion = clamp(rgssVersion, 0, 3);
     SE.sourceCount = clamp(SE.sourceCount, 1, 64);
-    BGM.trackCount = clamp(BGM.trackCount, 1, 16);
     
     // Determine whether to open a console window on... Windows
     winConsole = getEnvironmentBool("MKXPZ_WINDOWS_CONSOLE", editor.debug);

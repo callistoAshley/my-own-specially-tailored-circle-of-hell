@@ -370,3 +370,25 @@ void AudioStream::fadeInThread()
 		SDL_Delay(AUDIO_SLEEP);
 	}
 }
+
+// modshot extensions
+void AudioStream::pause()
+{
+	lockStream();
+	stream.pause();
+	unlockStream();
+}
+
+
+void AudioStream::setPitch(float value)
+{
+	lockStream();
+	stream.setPitch(value);
+	current.pitch = value;
+	unlockStream();
+}
+
+float AudioStream::getPitch()
+{
+	return current.pitch;
+}

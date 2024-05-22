@@ -143,6 +143,12 @@ struct AudioStream
 
 	float playingOffset();
 
+	// modshot extensions
+	void pause();
+
+	void setPitch(float value);
+	float getPitch();
+
 private:
 	float volumes[VolumeTypeCount];
 	void updateVolume();

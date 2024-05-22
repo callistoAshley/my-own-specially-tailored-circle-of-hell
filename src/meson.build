@@ -128,6 +128,7 @@ main_source = files(
     'audio/alstream.cpp',
     'audio/audio.cpp',
     'audio/audiostream.cpp',
+    'audio/audiochannels.cpp',
     'audio/fluid-fun.cpp',
     'audio/midisource.cpp',
     'audio/sdlsoundsource.cpp',

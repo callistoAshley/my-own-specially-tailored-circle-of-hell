@@ -69,6 +69,46 @@ public:
 
 	void reset();
 
+	// modshot extensions
+	void lchPlay(unsigned int id,
+				 const char *filename,
+	             int volume = 100,
+	             int pitch = 100,
+	             float pos = -1);
+	void lchStop(unsigned int id);
+	void lchFade(unsigned int id, int time);
+
+	void chPlay(unsigned int id,
+				 const char *filename,
+	             int volume = 100,
+	             int pitch = 100,
+	             float pos = -1);
+	void chStop(unsigned int id);
+	void chFade(unsigned int id, int time);
+	
+	float lchPos(unsigned int id);
+	float chPos(unsigned int id);
+
+	bool bgmIsPlaying();
+	bool bgsIsPlaying();
+	bool meIsPlaying();
+	bool lchIsPlaying(unsigned int id);
+	bool chIsPlaying(unsigned int id);
+
+
+#define AUDIO_H_DECL_CH_SPECIAL_FUNCS(entity) \
+	float get##entity##Volume(unsigned int id); \
+	void set##entity##Volume(unsigned int id, float volume); \
+	float get##entity##GlobalVolume(); \
+	void set##entity##GlobalVolume(float volume); \
+	float get##entity##Pitch(unsigned int id); \
+	void set##entity##Pitch(unsigned int id, float pitch); \
+	unsigned int entity##Size(); \
+	void entity##Resize(unsigned int size);
+
+	AUDIO_H_DECL_CH_SPECIAL_FUNCS(lch)
+	AUDIO_H_DECL_CH_SPECIAL_FUNCS(ch)
+
 private:
 	Audio(RGSSThreadData &rtData);
 	~Audio();

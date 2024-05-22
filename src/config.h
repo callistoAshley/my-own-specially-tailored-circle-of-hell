@@ -103,9 +103,8 @@ struct Config {
         int sourceCount;
     } SE;
     
-    struct {
-        int trackCount;
-    } BGM;
+
+    int audioChannels;
     
     bool useScriptNames;
     
