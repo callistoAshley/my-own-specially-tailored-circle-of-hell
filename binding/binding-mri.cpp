@@ -110,6 +110,7 @@ void oneshotJournalBindingInit();
 void oneshotNikoBindingInit();
 
 void modshotAleffectBindingInit();
+void modshotwindowBindingInit();
 
 RB_METHOD(mkxpDelta);
 RB_METHOD(mriPrint);
@@ -198,6 +199,7 @@ static void mriBindingInit() {
     oneshotNikoBindingInit();
 
     modshotAleffectBindingInit();
+    modshotwindowBindingInit();
     
     if (rgssVer >= 3) {
         _rb_define_module_function(rb_mKernel, "rgss_main", mriRgssMain);
