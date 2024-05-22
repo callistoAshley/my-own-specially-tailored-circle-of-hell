@@ -75,6 +75,7 @@ struct VButton
 	BTN_STRING(Run),
 	BTN_STRING(Deactivate),
   BTN_STRING(Items),
+	BTN_STRING(R),
 };
 
 static elementsN(vButtons);
@@ -939,12 +940,12 @@ SettingsMenu::SettingsMenu(RGSSThreadData &rtData)
 
 	const int bWidgetW = winSize.x / layoutW;
 	const int bWidgetH = 64;
-	const int bWidgetY = winSize.y - layoutH * bWidgetH - 48;
+	const int bWidgetY = winSize.y - layoutH*bWidgetH - 48;
 
-	for (int y = 0; y < (int) layoutH; ++y)
-		for (int x = 0; x < (int) layoutW; ++x)
+	for (int y = 0; y < (int)layoutH; ++y)
+		for (int x = 0; x < (int)layoutW; ++x)
 		{
-			int i = y*layoutH+x;
+			int i = x*layoutH+y;
 			BindingWidget w(i, p, IntRect(x*bWidgetW, bWidgetY+y*bWidgetH,
 			                              bWidgetW, bWidgetH));
 			p->bWidgets.push_back(w);

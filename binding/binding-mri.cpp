@@ -165,6 +165,10 @@ RB_METHOD(mkxpStringToUTF8Bang);
 VALUE json2rb(json5pp::value const &v);
 json5pp::value rb2json(VALUE v);
 
+RB_METHOD(compatEnableForceQuit) {
+    return Qnil; // does nothing
+}
+
 static void mriBindingInit() {
     tableBindingInit();
     etcBindingInit();
@@ -207,6 +211,14 @@ static void mriBindingInit() {
     modshotAleffectBindingInit();
     modshotwindowBindingInit();
     modshotSystemBindingInit();
+
+    VALUE _mkxp_module = rb_define_module("MKXP");
+    _rb_define_module_function(_mkxp_module, "allow_force_quit", compatEnableForceQuit);
+
+    if (shState->config().debugMode)
+        rb_gv_set("$debug", Qtrue);
+    else
+        rb_gv_set("$debug", Qfalse);
     
     if (rgssVer >= 3) {
         _rb_define_module_function(rb_mKernel, "rgss_main", mriRgssMain);
