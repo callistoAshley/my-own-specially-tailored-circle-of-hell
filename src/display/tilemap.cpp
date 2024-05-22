@@ -243,6 +243,7 @@ struct TilemapPrivate
 	Table *mapData;
 	Table *priorities;
 	bool visible;
+	bool wrapping;
 	Vec2i origin;
 
 	Vec2i dispPos;
@@ -356,6 +357,7 @@ struct TilemapPrivate
 	      mapViewportDirty(false),
 	      zOrderDirty(false),
 	      tilemapReady(false),
+				wrapping(false),
 
 		  opacity(255),
 	      blendType(BlendNormal),
@@ -742,8 +744,13 @@ struct TilemapPrivate
 
 	void handleTile(int x, int y, int z)
 	{
+		int ox = x + viewpPos.x;
+		int oy = y + viewpPos.y;
+		if (!wrapping && (ox < 0 || oy < 0 || ox >= mapData->xSize() || oy >= mapData->ySize()))
+			return;
+
 		int tileInd =
-			tableGetWrapped(*mapData, x + viewpPos.x, y + viewpPos.y, z);
+			tableGetWrapped(*mapData, ox, oy, z);
 
 		/* Check for empty space */
 		if (tileInd < 48)
@@ -1278,6 +1285,7 @@ DEF_ATTR_RD_SIMPLE(Tilemap, Visible, bool, p->visible)
 DEF_ATTR_RD_SIMPLE(Tilemap, OX, int, p->origin.x)
 DEF_ATTR_RD_SIMPLE(Tilemap, OY, int, p->origin.y)
 
+DEF_ATTR_SIMPLE(Tilemap, Wrapping, bool, p->wrapping)
 DEF_ATTR_RD_SIMPLE(Tilemap, BlendType, int, p->blendType)
 DEF_ATTR_SIMPLE(Tilemap, Opacity,   int,     p->opacity)
 DEF_ATTR_SIMPLE(Tilemap, Color,     Color&, *p->color)

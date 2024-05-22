@@ -151,6 +151,7 @@ DEF_GFX_PROP_OBJ_VAL(Tilemap, Color, Color, "color")
 DEF_GFX_PROP_OBJ_VAL(Tilemap, Tone, Tone, "tone")
 
 DEF_GFX_PROP_B(Tilemap, Visible)
+DEF_PROP_B(Tilemap, Wrapping)
 
 DEF_GFX_PROP_I(Tilemap, OX)
 DEF_GFX_PROP_I(Tilemap, OY)
@@ -189,6 +190,7 @@ void tilemapBindingInit() {
     INIT_PROP_BIND(Tilemap, Visible, "visible");
     INIT_PROP_BIND(Tilemap, OX, "ox");
     INIT_PROP_BIND(Tilemap, OY, "oy");
+    INIT_PROP_BIND(Tilemap, Wrapping, "wrapping");
     
     INIT_PROP_BIND(Tilemap, Opacity, "opacity");
     INIT_PROP_BIND(Tilemap, BlendType, "blend_type");
