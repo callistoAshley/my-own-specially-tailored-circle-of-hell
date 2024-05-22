@@ -22,6 +22,7 @@
 #ifndef AUDIO_H
 #define AUDIO_H
 
+#include "util.h"
 #include "al-util.h"
 
 /* Concerning the 'pos' parameter:
@@ -97,6 +98,9 @@ public:
 	bool lchIsPlaying(unsigned int id);
 	bool chIsPlaying(unsigned int id);
 
+  /* Non-standard extension */
+	DECL_ATTR( BGM_Volume, int)
+  DECL_ATTR( SFX_Volume, int)
 
 #define AUDIO_H_DECL_CH_SPECIAL_FUNCS(entity) \
 	float get##entity##Volume(unsigned int id); \
