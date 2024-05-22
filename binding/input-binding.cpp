@@ -651,26 +651,41 @@ RB_METHOD(inputStopTextInputCompat) {
     return Qnil;
 }
 
-// TODO
+// FIXME modshot added all scancodes to this too, so we should do that for compatibility
 RB_METHOD(inputCompatGetAllPressed)
 {
     RB_UNUSED_PARAM;
-
-    return rb_ary_new();
+	VALUE res = rb_ary_new();
+    for (size_t i = 0; i < buttonCodesN; i++) {
+		if (shState->input().isPressed(buttonCodes[i].val)) {
+            rb_ary_push(res, INT2FIX(buttonCodes[i].val));
+		}
+	}
+	return res;
 }
 
 RB_METHOD(inputCompatGetAllTriggered)
 {
     RB_UNUSED_PARAM;
-
-    return rb_ary_new();
+	VALUE res = rb_ary_new();
+    for (size_t i = 0; i < buttonCodesN; i++) {
+		if (shState->input().isTriggered(buttonCodes[i].val)) {
+            rb_ary_push(res, INT2FIX(buttonCodes[i].val));
+		}
+	}
+	return res;
 }
 
 RB_METHOD(inputCompatGetAllRepeated)
 {
     RB_UNUSED_PARAM;
-
-    return rb_ary_new();
+	VALUE res = rb_ary_new();
+    for (size_t i = 0; i < buttonCodesN; i++) {
+		if (shState->input().isRepeated(buttonCodes[i].val)) {
+            rb_ary_push(res, INT2FIX(buttonCodes[i].val));
+		}
+	}
+	return res;
 }
 
 RB_METHOD(inputCompatSetAllPressedUnPressed)
