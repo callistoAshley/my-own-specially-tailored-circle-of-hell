@@ -317,7 +317,7 @@ void EventThread::process(RGSSThreadData &rtData)
                 
             case SDL_TEXTINPUT :
                 lockText(true);
-                if (textInputBuffer.size() < 512) {
+                if (textInputBuffer.size() < 512 && acceptingTextInput) {
                     textInputBuffer += event.text.text;
                 }
                 lockText(false);
@@ -413,6 +413,18 @@ void EventThread::process(RGSSThreadData &rtData)
                     rtData.rqResetFinish.clear();
                     rtData.rqReset.set();
                     break;
+                }
+
+                if (acceptingTextInput && event.key.keysym.sym == SDLK_BACKSPACE) {
+                    // remove one unicode character
+                    lockText(true);
+                    while (textInputBuffer.length() != 0 && (textInputBuffer.back() & 0xc0) == 0x80) {
+                        textInputBuffer.pop_back();
+                    }
+                    if (textInputBuffer.length() != 0) {
+                        textInputBuffer.pop_back();
+                    }
+                    lockText(false);
                 }
                 
                 keyStates[event.key.keysym.scancode] = true;
@@ -526,16 +538,12 @@ void EventThread::process(RGSSThreadData &rtData)
                         if (event.user.code)
                         {
                             SDL_StartTextInput();
-                            lockText(true);
-                            textInputBuffer.clear();
-                            lockText(false);
+                            acceptingTextInput = true;
                         }
                         else
                         {
                             SDL_StopTextInput();
-                            lockText(true);
-                            textInputBuffer.clear();
-                            lockText(false);
+                            acceptingTextInput = false;
                         }
                         break;
                         

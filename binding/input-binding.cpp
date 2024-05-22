@@ -26,7 +26,12 @@
 #include "eventthread.h"
 
 #include "binding-util.h"
+#include "ruby/internal/intern/string.h"
 #include "ruby/internal/intern/variable.h"
+#include "ruby/internal/special_consts.h"
+#include "ruby/internal/symbol.h"
+#include "ruby/internal/value_type.h"
+#include "ruby/internal/variable.h"
 #include "util/exception.h"
 #include "input/input.h"
 #include "sharedstate.h"
@@ -102,7 +107,14 @@ RB_METHOD(inputPress) {
     
     VALUE button;
     rb_scan_args(argc, argv, "1", &button);
-    
+
+    // FIXME: HACK: workaround to allow for using scancodes in press?
+    if (RB_TYPE_P(button, T_SYMBOL))
+    {
+        int num = getScancodeArg(&button);
+        return rb_bool_new(shState->input().isPressedEx(num, 0));
+    }
+
     int num = getButtonArg(&button);
     
     return rb_bool_new(shState->input().isPressed(num));
@@ -115,6 +127,13 @@ RB_METHOD(inputTrigger) {
     
     VALUE button;
     rb_scan_args(argc, argv, "1", &button);
+
+    // FIXME: HACK: workaround to allow for using scancodes in trigger?
+    if (RB_TYPE_P(button, T_SYMBOL))
+    {
+        int num = getScancodeArg(&button);
+        return rb_bool_new(shState->input().isTriggeredEx(num, 0));
+    }
     
     int num = getButtonArg(&button);
     
@@ -128,6 +147,13 @@ RB_METHOD(inputRepeat) {
     
     VALUE button;
     rb_scan_args(argc, argv, "1", &button);
+
+    // FIXME: HACK: workaround to allow for using scancodes in press?
+    if (RB_TYPE_P(button, T_SYMBOL))
+    {
+        int num = getScancodeArg(&button);
+        return rb_bool_new(shState->input().isRepeatedEx(num, 0));
+    }
     
     int num = getButtonArg(&button);
     
@@ -141,6 +167,13 @@ RB_METHOD(inputRelease) {
     
     VALUE button;
     rb_scan_args(argc, argv, "1", &button);
+
+    // FIXME: HACK: workaround to allow for using scancodes in press?
+    if (RB_TYPE_P(button, T_SYMBOL))
+    {
+        int num = getScancodeArg(&button);
+        return rb_bool_new(shState->input().isReleasedEx(num, 0));
+    }
     
     int num = getButtonArg(&button);
     
@@ -572,7 +605,50 @@ RB_METHOD(inputQuit)
 	return rb_bool_new(shState->input().hasQuit());
 }
 
-#define BIND_SDL_SCANCODE(code) rb_const_set(module, rb_intern("KEY_" #code), rb_str_new_cstr(#code));
+#define BIND_SDL_SCANCODE(code) rb_const_set(module, rb_intern("KEY_" #code), rb_id2sym(rb_intern(#code)));
+
+
+RB_METHOD(inputTextInputCompat) {
+    RB_UNUSED_PARAM;
+
+    shState->eThread().lockText(true);
+    VALUE text = rb_utf8_str_new_cstr(shState->input().getText());
+    shState->eThread().lockText(false);
+
+    return rb_str_dup(text);
+}
+
+RB_METHOD(inputSetTextInputCompat) {
+    RB_UNUSED_PARAM;
+
+    const char* str;
+    rb_get_args(argc, argv, "z", &str RB_ARG_END);
+
+    shState->eThread().lockText(true);
+    shState->input().setText(str);
+    shState->eThread().lockText(false);
+
+    return Qnil;
+}
+
+RB_METHOD(inputStartTextInputCompat) {
+    RB_UNUSED_PARAM;
+
+    int _limit;
+    rb_get_args(argc, argv, "|i", &_limit RB_ARG_END);
+
+    shState->input().setTextInputMode(true);
+
+    return Qnil;
+}
+
+RB_METHOD(inputStopTextInputCompat) {
+    RB_UNUSED_PARAM;
+
+    shState->input().setTextInputMode(false);
+
+    return Qnil;
+}
 
 void inputBindingInit() {
     VALUE module = rb_define_module("Input");
@@ -618,14 +694,19 @@ void inputBindingInit() {
     _rb_define_module_function(submod, "repeatcount", inputControllerCountEx);
     _rb_define_module_function(submod, "timeex?", inputControllerRepeatTimeEx);
     
-    _rb_define_module_function(module, "text_input", inputGetMode);
-    _rb_define_module_function(module, "text_input=", inputSetMode);
-    _rb_define_module_function(module, "gets", inputGets);
+    _rb_define_module_function(module, "mkxp_z_text_input", inputGetMode);
+    _rb_define_module_function(module, "mkxp_z_text_input=", inputSetMode);
+    _rb_define_module_function(module, "mkxp_z_gets", inputGets);
     
     _rb_define_module_function(module, "clipboard", inputGetClipboard);
     _rb_define_module_function(module, "clipboard=", inputSetClipboard);
 
     _rb_define_module_function(module, "quit?", inputQuit);
+
+    _rb_define_module_function(module, "start_text_input", inputStartTextInputCompat);
+    _rb_define_module_function(module, "stop_text_input", inputStopTextInputCompat);
+    _rb_define_module_function(module, "text_input", inputTextInputCompat);
+    _rb_define_module_function(module, "set_text_input", inputSetTextInputCompat);
     
     if (rgssVer >= 3) {
         VALUE symHash = rb_hash_new();

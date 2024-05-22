@@ -1506,6 +1506,11 @@ void Input::clearText()
     shState->eThread().textInputBuffer.clear();
 }
 
+void Input::setText(const char *text)
+{
+    shState->eThread().textInputBuffer = text;
+}
+
 char *Input::getClipboardText()
 {
     char *tx = SDL_GetClipboardText();

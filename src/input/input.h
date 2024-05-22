@@ -111,6 +111,7 @@ public:
     void setTextInputMode(bool mode);
     const char *getText();
     void clearText();
+    void setText(const char *text);
     
     char *getClipboardText();
     void setClipboardText(char *text);

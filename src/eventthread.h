@@ -135,6 +135,8 @@ private:
     
     SDL_mutex *textInputLock;
 
+	bool acceptingTextInput = false;
+
 	struct
 	{
 		AtomicFlag sendUpdates;
