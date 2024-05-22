@@ -473,7 +473,7 @@ void Font::initDynAttribs()
 {
 	p->color = new Color(p->colorTmp);
 
-	if (rgssVer >= 3)
+	// if (rgssVer >= 3)
 		p->outColor = new Color(p->outColorTmp);;
 }
 
@@ -481,7 +481,7 @@ void Font::initDefaultDynAttribs()
 {
 	FontPrivate::defaultColor = new Color(FontPrivate::defaultColorTmp);
 
-	if (rgssVer >= 3)
+	// if (rgssVer >= 3)
 		FontPrivate::defaultOutColor = new Color(FontPrivate::defaultOutColorTmp);
 }
 

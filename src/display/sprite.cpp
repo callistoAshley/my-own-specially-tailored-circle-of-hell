@@ -439,11 +439,11 @@ void Sprite::setY(int value)
     
     p->trans.setPosition(Vec2(getX(), value));
     
-    if (rgssVer >= 2)
-    {
+    // if (rgssVer >= 2)
+    // {
         p->wave.dirty = true;
         setSpriteY(value);
-    }
+    // }
 }
 
 void Sprite::setOX(int value)
@@ -486,7 +486,7 @@ void Sprite::setZoomY(float value)
     p->trans.setScale(Vec2(getZoomX(), value));
     p->recomputeBushDepth();
     
-    if (rgssVer >= 2)
+    // if (rgssVer >= 2)
         p->wave.dirty = true;
 }
 
