@@ -108,6 +108,10 @@ void oneshotBindingInit();
 void oneshotSteamBindingInit();
 void oneshotJournalBindingInit();
 void oneshotNikoBindingInit();
+void oneshotWallpaperBindingInit();
+#ifdef __LINUX__
+void oneshotWallpaperBindingTerminate();
+#endif
 
 void modshotAleffectBindingInit();
 void modshotwindowBindingInit();
@@ -197,6 +201,7 @@ static void mriBindingInit() {
     oneshotSteamBindingInit();
     oneshotJournalBindingInit();
     oneshotNikoBindingInit();
+    oneshotWallpaperBindingInit();
 
     modshotAleffectBindingInit();
     modshotwindowBindingInit();
@@ -1270,6 +1275,11 @@ static void mriBindingExecute() {
     shState->rtData().rqTermAck.set();
 }
 
-static void mriBindingTerminate() { rb_raise(rb_eSystemExit, " "); }
+static void mriBindingTerminate() {
+    #ifdef __linux__
+	    oneshotWallpaperBindingTerminate();
+    #endif
+    rb_raise(rb_eSystemExit, " "); 
+}
 
 static void mriBindingReset() { rb_raise(getRbData()->exc[Reset], " "); }
