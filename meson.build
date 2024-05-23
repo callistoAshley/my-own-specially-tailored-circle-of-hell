@@ -120,6 +120,7 @@ subdir('binding')
 subdir('shader')
 subdir('assets')
 subdir('journal')
+subdir('scripts')
 
 global_include_dirs += include_directories('src', 'binding')
 
