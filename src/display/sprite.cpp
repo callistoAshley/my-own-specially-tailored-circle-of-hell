@@ -271,11 +271,18 @@ struct SpritePrivate
         float chunkX = sin(wavePos) * wave.amp;
         
 
-        FloatRect tex(0, chunkY / zoomY, width, chunkLength / zoomY);
-        FloatRect pos = tex;
-        pos.x = chunkX;
+		FloatRect tex = getMirroredTexRect(srcRect->toFloatRect());
+		// note: width is ignored, we're using the mirrored srcRect (the original width is from srcRect anyway)
+		if (tex.h < 0) { // texture itself is vflipped
+			tex.y -= chunkY / zoomY;
+			tex.h = -chunkLength / zoomY;
+		} else {
+			tex.y += chunkY / zoomY;
+			tex.h = chunkLength / zoomY;
+		}
+		FloatRect pos(chunkX, chunkY / zoomY, abs(tex.w), abs(tex.h));
 
-        Quad::setTexPosRect(vert, mirrored ? tex.hFlipped() : tex, pos);
+        Quad::setTexPosRect(vert, tex, pos);
         vert += 4;
     }
     
@@ -295,6 +302,12 @@ struct SpritePrivate
         int width = srcRect->width;
         int height = srcRect->height;
         float zoomY = trans.getScale().y;
+
+        if (width == 0 || height == 0)
+        {
+            wave.active = false;
+            return;
+        }
         
         if (wave.amp < -(width / 2))
         {

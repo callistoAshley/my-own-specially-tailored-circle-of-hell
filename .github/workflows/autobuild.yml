@@ -21,7 +21,7 @@ jobs:
 
       - uses: msys2/setup-msys2@v2
         with:
-          msystem: urct64
+          msystem: UCRT64
           install: >-
             base-devel
             git
