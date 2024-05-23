@@ -1,4 +1,3 @@
-#include <shlobj.h>
 #include <zmq.hpp>
 
 #define STB_IMAGE_IMPLEMENTATION

@@ -46,9 +46,9 @@ CMAKE_ARGS := \
 
 RUBY_CONFIGURE_ARGS := \
 	--prefix="$(shell cygpath -m ${BUILD_PREFIX})" \
-	--without-gmp
+	--without-gmp \
+	--disable-install-doc 
 #	--enable-install-static-library \
-	--disable-install-doc \
 	--with-out-ext=openssl,readline,dbm,gdbm,win32ole \
 	--with-static-linked-ext \
 	--disable-rubygems \
@@ -324,7 +324,7 @@ $(DOWNLOADS)/ruby/configure: $(DOWNLOADS)/ruby/configure.ac
 	cd $(DOWNLOADS)/ruby; autoreconf -i
 
 $(DOWNLOADS)/ruby/configure.ac:
-	$(CLONE) $(GITHUB)/ruby/ruby $(DOWNLOADS)/ruby --single-branch --branch v3_1_4 --depth 1;
+	$(CLONE) $(GITHUB)/mkxp-z/ruby $(DOWNLOADS)/ruby --single-branch --branch mkxp-z-3.1.3 --depth 1;
 
 sdl3: init_dirs $(LIBDIR)/libSDL3.a
 
