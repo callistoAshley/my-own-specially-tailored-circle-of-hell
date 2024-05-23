@@ -20,7 +20,6 @@
  */
 
 #include <SDL_joystick.h>
-#include <string>
 
 
 #include "eventthread.h"
@@ -691,47 +690,83 @@ RB_METHOD(inputCompatGetAllRepeated)
 RB_METHOD(inputCompatSetAllPressedUnPressed)
 {
     RB_UNUSED_PARAM;
-
+    for (size_t i = 0; i < buttonCodesN; i++) {
+        if (shState->input().isPressed(buttonCodes[i].val)) {
+            shState->input().unsetKey(buttonCodes[i].val);
+        }
+    }
     return Qnil;
 }
 
 RB_METHOD(inputCompatSetAllUnPressed)
 {
     RB_UNUSED_PARAM;
-
+    for (size_t i = 0; i < buttonCodesN; i++) {
+        shState->input().unsetKey(buttonCodes[i].val);		
+    }
     return Qnil;
 }
 
 RB_METHOD(inputCompatSetKey)
 {
-	RB_UNUSED_PARAM;
+    RB_UNUSED_PARAM;
 
-	return Qnil;
+    VALUE button;
+    rb_scan_args(argc, argv, "1", &button);
+
+    int num = getButtonArg(&button);
+    shState->input().setKey(num);
+
+    return Qnil;
 }
 
 RB_METHOD(inputCompatUnsetKey)
 {
-	RB_UNUSED_PARAM;
+    RB_UNUSED_PARAM;
 
-	return Qnil;
+    VALUE button;
+    rb_scan_args(argc, argv, "1", &button);
+
+    int num = getButtonArg(&button);
+    shState->input().unsetKey(num);
+
+    return Qnil;
 }
 RB_METHOD(inputCompatSetKeyPressed)
 {
-	RB_UNUSED_PARAM;
+    RB_UNUSED_PARAM;
 
-	return Qnil;
+    VALUE button;
+    rb_scan_args(argc, argv, "1", &button);
+
+    int num = getButtonArg(&button);
+    shState->input().setPressed(num);
+
+    return Qnil;
 }
 RB_METHOD(inputCompatSetKeyTriggered)
 {
-	RB_UNUSED_PARAM;
+    RB_UNUSED_PARAM;
 
-	return Qnil;
+    VALUE button;
+    rb_scan_args(argc, argv, "1", &button);
+
+    int num = getButtonArg(&button);
+    shState->input().setTriggered(num);
+
+    return Qnil;
 }
 RB_METHOD(inputCompatSetKeyRepeated)
 {
-	RB_UNUSED_PARAM;
+    RB_UNUSED_PARAM;
 
-	return Qnil;
+    VALUE button;
+    rb_scan_args(argc, argv, "1", &button);
+
+    int num = getButtonArg(&button);
+    shState->input().setRepeated(num);
+
+    return Qnil;
 }
 
 void inputBindingInit() {

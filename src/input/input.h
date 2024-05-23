@@ -119,6 +119,12 @@ public:
     const char *getAxisName(SDL_GameControllerAxis axis);
     const char *getButtonName(SDL_GameControllerButton button);
 
+    void setKey(int button);
+	void unsetKey(int button);
+	void setPressed(int button);
+	void setTriggered(int button);
+	void setRepeated(int button);
+
 private:
 	Input(const RGSSThreadData &rtData);
 	~Input();
