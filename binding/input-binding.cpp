@@ -645,6 +645,10 @@ RB_METHOD(inputStartTextInputCompat) {
 RB_METHOD(inputStopTextInputCompat) {
     RB_UNUSED_PARAM;
 
+    shState->eThread().lockText(true);
+    shState->input().clearText();
+    shState->eThread().lockText(false);
+
     shState->input().setTextInputMode(false);
 
     return Qnil;
