@@ -26,6 +26,12 @@ foreach file : embedded_assets_f
 endforeach
 
 sources += 'journal.cpp'
+includes = [include_directories('stb', 'common')]
+
+if host_system == 'linux'
+    sources += '../src/oneshot/xdg-user-dir-lookup.c'
+    includes += include_directories('../src/oneshot')
+endif
 
 if host_system == 'windows'
     win = import('windows')
@@ -50,7 +56,7 @@ executable(
     dependencies: [sdl3, cppzmq],
     link_args: link_args,
     win_subsystem: 'windows',
-    include_directories: include_directories('stb', 'common'),
+    include_directories: includes,
     cpp_args: args,
     objc_args: args,
     objcpp_args: args

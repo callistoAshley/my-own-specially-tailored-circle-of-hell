@@ -11,6 +11,12 @@ def fake_save
   Dir.mkdir(Oneshot::GAME_PATH) unless File.exists?(Oneshot::GAME_PATH)
   Dir.mkdir(Oneshot::GAME_PATH + "/Oneshot") unless File.exists?(Oneshot::GAME_PATH + "/Oneshot")
   File.open(FAKE_SAVE_NAME, 'wb+') do |file|
+    # Before we start dumping save data, we write the path of the image to load
+    path = Dir.pwd + "/Graphics/Journal/save.png"
+    pathlen = path.length.to_s.rjust(4, '0') # ensure the length is always 4 digits
+    file.write(pathlen)
+    file.write(path)
+
     # Wrire frame count for measuring play time
     Marshal.dump(Graphics.frame_count, file)
     # Increase save count by 1

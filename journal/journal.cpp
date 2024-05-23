@@ -1,20 +1,3 @@
-// Copyright (C) 2024 Lily Lyons
-//
-// This file is part of ModShot-BaiHua.
-//
-// ModShot-BaiHua is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// ModShot-BaiHua is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with ModShot-BaiHua.  If not, see <https://www.gnu.org/licenses/>.
-
 #include <zmq.hpp>
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -22,8 +5,9 @@
 
 #include <cstdio>
 #include <cstdlib>
-#include <iostream>
 #include <string>
+#include <cassert>
+#include <iostream>
 
 #include <SDL3/SDL.h>
 
@@ -32,6 +16,18 @@
 #include "niko1.png.xxd"
 #include "niko2.png.xxd"
 #include "niko3.png.xxd"
+
+#ifdef __linux__
+#include "xdg-user-dir-lookup.h"
+#endif
+
+std::string fake_save_path() {
+  #ifdef __linux__
+  std::string path = xdg_user_dir_lookup("DOCUMENTS");
+  #endif
+  path += "/Oneshot/save_progress.oneshot";
+  return path;
+}
 
 SDL_HitTestResult hit_test_fun(SDL_Window *window, const SDL_Point *point,
                                void *userdata) {
@@ -46,7 +42,7 @@ SDL_HitTestResult hit_test_fun(SDL_Window *window, const SDL_Point *point,
     return SDL_HITTEST_NORMAL;
 }
 
-void journal_handling();
+void journal_handling(const stbi_uc* initial_image_buf, size_t initial_image_buf_len);
 void niko_handling(int x, int y);
 
 int main(int argc, char **argv) {
@@ -55,7 +51,41 @@ int main(int argc, char **argv) {
     int y = atoi(argv[2]);
     niko_handling(x, y);
   } else {
-    journal_handling();
+    const stbi_uc* initial_image_buf = ___journal_clover_png;
+    size_t initial_image_buf_len = ___journal_clover_png_len;
+
+    std::string save_path = fake_save_path();
+    FILE *file = fopen(save_path.c_str(), "rb");
+    if (file) {
+      // 4 bytes + null terminator
+      char pathlen_buf[5] = {0};
+      fread(&pathlen_buf, 1, 4, file);
+      int pathlen = atoi(pathlen_buf);
+      std::string save_image_path(pathlen, '\0');
+      fread(save_image_path.data(), 1, pathlen, file);
+      fclose(file);
+      
+      file = fopen(save_image_path.c_str(), "rb");
+      
+      if (!file) {
+        std::cerr << "loading save image failed: " << save_image_path << std::endl;
+
+        return 1;
+      }
+
+      fseek(file, 0, SEEK_END);
+      initial_image_buf_len = ftell(file);
+      fseek(file, 0, SEEK_SET);
+
+      initial_image_buf = (stbi_uc *)malloc(initial_image_buf_len);
+      fread((void *)initial_image_buf, 1, initial_image_buf_len, file);
+      fclose(file);
+    }
+
+    journal_handling(initial_image_buf, initial_image_buf_len);
+
+    if (initial_image_buf != ___journal_clover_png)
+      free((void *) initial_image_buf);
   }
 }
 
@@ -170,7 +200,7 @@ int server_thread(void *data) {
   return 0;
 }
 
-void journal_handling() {
+void journal_handling(const stbi_uc* initial_image_buf, size_t initial_image_buf_len) {
   // FIXME error handling
   SDL_Init(SDL_INIT_VIDEO);
 
@@ -192,7 +222,7 @@ void journal_handling() {
 
   int w, h, comp;
   ctx.pixels = stbi_load_from_memory(
-      ___journal_clover_png, ___journal_clover_png_len, &w, &h, &comp, 4);
+      initial_image_buf, initial_image_buf_len, &w, &h, &comp, 4);
   ctx.surface =
       SDL_CreateSurfaceFrom(ctx.pixels, w, h, w * 4, SDL_PIXELFORMAT_ABGR8888);
 
@@ -204,9 +234,6 @@ void journal_handling() {
   ctx.texture = SDL_CreateTextureFromSurface(ctx.renderer, ctx.surface);
 
   SDL_SetWindowHitTest(ctx.window, hit_test_fun, ctx.surface);
-
-  int window_x, window_y, old_window_x, old_window_y = 0;
-  SDL_GetWindowPosition(ctx.window, &window_x, &window_y);
 
   ctx.mutex = SDL_CreateMutex();
   ctx.thread = SDL_CreateThread(server_thread, "server thread", &ctx);
@@ -220,23 +247,16 @@ void journal_handling() {
       case SDL_EVENT_QUIT:
         ctx.running = false;
         break;
+      case SDL_EVENT_WINDOW_MOVED:
+        message.tag = Message::WindowPosition;
+        message.val.pos = { event.window.data1, event.window.data2 };
+        zmq_message.rebuild(&message, sizeof(Message));
+        ctx.pub_socket.send(zmq_message, zmq::send_flags::dontwait);
+        break;
       }
     }
 
     SDL_LockMutex(ctx.mutex);
-
-    // FIXME this does not account for the position while dragging the window on
-    // windows (apparently)
-    SDL_GetWindowPosition(ctx.window, &window_x, &window_y);
-    if (window_x != old_window_x || window_y != old_window_y) {
-      old_window_x = window_x;
-      old_window_y = window_y;
-
-      message.tag = Message::WindowPosition;
-      message.val.pos = {window_x, window_y};
-      zmq_message.rebuild(&message, sizeof(Message));
-      ctx.pub_socket.send(zmq_message, zmq::send_flags::dontwait);
-    }
 
     SDL_RenderClear(ctx.renderer);
     SDL_RenderTexture(ctx.renderer, ctx.texture, NULL, NULL);
