@@ -14,7 +14,7 @@ SDL_FLAGS := ${SDL_FLAGS}
 SDL2_IMAGE_FLAGS := ${SDL2_IMAGE_FLAGS}
 SDL2_TTF_FLAGS := ${SDL2_TTF_FLAGS}
 OPENAL_FLAGS := ${OPENAL_FLAGS}
-OPENSSL_FLAGS := ming64 ${OPENSSL_FLAGS}
+OPENSSL_FLAGS := mingw64 ${OPENSSL_FLAGS}
 RUBY_FLAGS := ${RUBY_FLAGS}
 
 BUILD_PREFIX := ${PWD}/build-$(ARCH)
@@ -46,12 +46,12 @@ CMAKE_ARGS := \
 
 RUBY_CONFIGURE_ARGS := \
 	--prefix="$(shell cygpath -m ${BUILD_PREFIX})" \
-	--enable-install-static-library \
+	--without-gmp
+#	--enable-install-static-library \
 	--disable-install-doc \
 	--with-out-ext=openssl,readline,dbm,gdbm,win32ole \
 	--with-static-linked-ext \
 	--disable-rubygems \
-	--without-gmp
 
 CONFIGURE := $(CONFIGURE_ENV) ./configure $(CONFIGURE_ARGS)
 AUTOGEN   := $(CONFIGURE_ENV) ./autogen.sh $(CONFIGURE_ARGS)
@@ -324,7 +324,7 @@ $(DOWNLOADS)/ruby/configure: $(DOWNLOADS)/ruby/configure.ac
 	cd $(DOWNLOADS)/ruby; autoreconf -i
 
 $(DOWNLOADS)/ruby/configure.ac:
-	$(CLONE) $(GITHUB)/mkxp-z/ruby $(DOWNLOADS)/ruby --single-branch --branch mkxp-z-3.1.3 --depth 1;
+	$(CLONE) $(GITHUB)/ruby/ruby $(DOWNLOADS)/ruby --single-branch --branch v3_1_4 --depth 1;
 
 sdl3: init_dirs $(LIBDIR)/libSDL3.a
 
@@ -347,7 +347,7 @@ $(LIBDIR)/libzmq.a: $(DOWNLOADS)/libzmq/cmakebuild/Makefile
 
 $(DOWNLOADS)/libzmq/cmakebuild/Makefile: $(DOWNLOADS)/libzmq/CMakeLists.txt
 	cd $(DOWNLOADS)/libzmq; mkdir -p cmakebuild; cd cmakebuild; \
-	$(CMAKE) -DWITH_TLS=OFF -DWITH_LIBBSD=OFF -DZMQ_HAVE_IPC=off -d -DBUILD_SHARED=0
+	$(CMAKE) -DWITH_TLS=OFF -DWITH_LIBBSD=OFF -DZMQ_HAVE_IPC=off -DBUILD_SHARED=0
 
 $(DOWNLOADS)/libzmq/CMakeLists.txt:
 	$(CLONE) --branch v4.3.5 $(GITHUB)/zeromq/libzmq $(DOWNLOADS)/libzmq

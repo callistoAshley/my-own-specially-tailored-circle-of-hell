@@ -1,3 +1,4 @@
+#include <shlobj.h>
 #include <zmq.hpp>
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -20,10 +21,17 @@
 #ifdef __linux__
 #include "xdg-user-dir-lookup.h"
 #endif
+#ifdef __WIN32
+#include <windows.h>
+#endif
 
 std::string fake_save_path() {
   #ifdef __linux__
   std::string path = xdg_user_dir_lookup("DOCUMENTS");
+  #endif
+  #ifdef __WIN32
+   std::string path = getenv("USERPROFILE");
+   path += "/Documents/My Games";
   #endif
   path += "/Oneshot/save_progress.oneshot";
   return path;

@@ -50,6 +50,10 @@ link_args = [
 
 args = ['-DZMQ_STATIC']
 
+if host_system == 'windows'
+    link_args += ['-lws2_32', '-liphlpapi']
+endif
+
 executable(
     meson.project_name() + '-journal',
     sources: sources,

@@ -80,3 +80,4 @@ DerivedData/
 /.cache 
 
 /steamworks
+windows/build-ucrt64

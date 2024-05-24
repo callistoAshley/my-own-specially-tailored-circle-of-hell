@@ -1,6 +1,7 @@
 #include "binding-util.h"
 #include "eventthread.h"
 #include "sharedstate.h"
+#include "debugwriter.h"
 
 #define NIKO_X (320 - 16)
 #define NIKO_Y ((13 * 16) * 2)
