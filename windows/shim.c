@@ -38,7 +38,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     argv[0] = ARGV0;
   }
 
-  _wexecv(L"lib\\cloverlink.exe", (const wchar_t *const *)argv);
+  _wexecv(L"lib\\oneshot.exe", (const wchar_t *const *)argv);
 
   MessageBoxW(NULL,
               L"Cannot start ModShot for some reason.\nPlease check your "
