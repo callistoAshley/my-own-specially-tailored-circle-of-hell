@@ -31,6 +31,7 @@ jobs:
             mingw-w64-ucrt-x86_64-meson
             mingw-w64-ucrt-x86_64-autotools
             mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-boost
 
 
       - name: Checkout repository
@@ -105,7 +106,7 @@ jobs:
       - name: Install apt dependencies
         run: |
           sudo apt update
-          sudo apt install git build-essential cmake meson autoconf automake libtool pkg-config ruby bison zlib1g-dev libbz2-dev xorg-dev libgl1-mesa-dev libasound2-dev libpulse-dev libxfconf-0-dev libgtk-3-dev -y
+          sudo apt install git build-essential cmake meson autoconf automake libtool pkg-config ruby bison zlib1g-dev libbz2-dev xorg-dev libgl1-mesa-dev libasound2-dev libpulse-dev libxfconf-0-dev libgtk-3-dev libboost-dev -y
 
       - name: Build everything else
         run: |

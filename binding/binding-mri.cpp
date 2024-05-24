@@ -1157,6 +1157,11 @@ static void mriBindingExecute() {
     
     RUBY_INIT_STACK;
     ruby_init();
+
+    // Add the proper load paths. It needs to be added to $LOAD_PATH, otherwise encodings won't load..?
+    rb_eval_string(
+        "$LOAD_PATH.unshift(File.join(Dir.pwd, 'lib', 'ruby'))\n"
+        "$LOAD_PATH.unshift(File.join(Dir.pwd, 'lib', 'ruby', RUBY_PLATFORM))\n");
     
     std::vector<const char*> rubyArgsC{"oneshot"};
     rubyArgsC.push_back("-e ");
@@ -1231,10 +1236,7 @@ static void mriBindingExecute() {
     
     // Duplicates get pushed for some reason
     rb_funcall(rbArgv, rb_intern("uniq!"), 0);
-    
-    VALUE lpaths = rb_gv_get(":");
-    rb_ary_clear(lpaths);
-    
+
 #if defined(MKXPZ_BUILD_XCODE) && RAPI_MAJOR >= 2
     std::string resPath = mkxp_fs::getResourcePath();
     resPath += "/Ruby/" + std::to_string(RAPI_MAJOR) + "." + std::to_string(RAPI_MINOR) + ".0";
@@ -1256,11 +1258,6 @@ static void mriBindingExecute() {
 //     }
 // #endif
 
-    // Add the proper load paths. It needs to be added to $LOAD_PATH, otherwise encodings won't load..?
-    rb_eval_string(
-        "$LOAD_PATH.unshift(File.join(Dir.pwd, 'lib', 'ruby'))\n"
-        "$LOAD_PATH.unshift(File.join(Dir.pwd, 'lib', 'ruby', RUBY_PLATFORM))\n");
-    
     RbData rbData;
     shState->setBindingData(&rbData);
     BacktraceData btData;
