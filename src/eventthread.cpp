@@ -681,7 +681,7 @@ int EventThread::eventFilter(void *data, SDL_Event *event)
                 if (shState != NULL && shState->rgssVersion > 0)
                 {
                     shState->oneshot().setWindowPos(event->window.data1, event->window.data2);
-                    shState->graphics().update(false);
+                    // shState->graphics().update(false);
                 }
                 return 0;
             }

@@ -2,19 +2,13 @@
 #include "eventthread.h"
 #include "sharedstate.h"
 #include "debugwriter.h"
+#include <cstdio>
 
 #define NIKO_X (320 - 16)
 #define NIKO_Y ((13 * 16) * 2)
 
 #include <filesystem>
-
-#ifdef __WIN32__
-#include <shlwapi.h>
-#endif
-#ifdef __LINUX__
-#include <cstdlib>
-#endif
-#include <sstream>
+#include <process.h>
 
 RB_METHOD(nikoPrepare) {
   RB_UNUSED_PARAM;
@@ -43,27 +37,19 @@ RB_METHOD(nikoStart) {
   std::string dir = pwd.string();
 
 #ifdef __WIN32__
-  dir += "_______.exe";
-  std::stringstream args(dir);
-  args << " " << x << " " << y;
-
-  bool result = CreateProcessA(dir.c_str(), (LPSTR)args.str().c_str(), NULL,
-                               NULL, false, 0, NULL, NULL, NULL, NULL);
-  if (!result) {
-    DWORD dwLastError = GetLastError();
-
-    Debug() << "Failed to start process" << dir;
-    Debug() << "Win32 Error Code:" << dwLastError;
-  }
+  dir += "\\_______.exe";
 #endif
 #ifdef __LINUX__
   dir += "/_______";
-
-  std::stringstream args = std::stringstream();
-  args << "\"" << dir << "\" " << x << " " << y << " &";
-
-  system(args.str().c_str());
 #endif
+
+  std::string window_x = std::to_string(x);
+  std::string window_y = std::to_string(y);
+  char* const args[] = {
+      const_cast<char*>(dir.c_str()), const_cast<char*>(window_x.c_str()),
+      const_cast<char*>(window_y.c_str())};
+
+  spawnv(_P_DETACH, dir.c_str(), args);
 
   return Qnil;
 }
