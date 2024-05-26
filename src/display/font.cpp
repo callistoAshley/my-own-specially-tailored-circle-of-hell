@@ -79,8 +79,6 @@ static SDL_RWops *openBundledFont()
 #endif
 }
 
-
-
 typedef std::pair<std::string, int> FontKey;
 
 struct FontSet
@@ -199,7 +197,7 @@ _TTF_Font *SharedFontState::getFont(std::string family,
 	if (family.empty())
 	{
 		/* Built-in font */
-		ops = openBundledFont();
+		throw Exception(Exception::RGSSError, "font does not exist");
 	}
 	else
 	{
@@ -215,7 +213,7 @@ _TTF_Font *SharedFontState::getFont(std::string family,
 	// FIXME 0.9 is guesswork at this point
 //	float gamma = (96.0/45.0)*(5.0/14.0)*(size-5);
 //	font = TTF_OpenFontRW(ops, 1, gamma /** .90*/);
-	font = TTF_OpenFontRW(ops, 1, size* 0.90f);
+	font = TTF_OpenFontRW(ops, 1, size);
 
 	if (!font)
 		throw Exception(Exception::SDLError, "%s", SDL_GetError());
