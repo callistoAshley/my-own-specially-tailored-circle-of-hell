@@ -146,14 +146,9 @@ else
     endif
 endif
 
-exe_name = meson.project_name()
-
-if host_system == 'linux' and get_option('appimage') == false
-    exe_name += '.' + host_machine.cpu()
-endif
+exe_name = 'oneshot'
 
 if steamworks == true
-    exe_name = 'steam_' + exe_name
     la = ''
     if build_static == true
         if host_system == 'windows'
@@ -204,7 +199,7 @@ executable(exe_name,
 # Shim for Windows
 if host_system == 'windows'
     executable(
-        meson.project_name() + '-shim',
+        exe_name + '-shim',
         sources: [
             'windows/shim.c',
             windows_resources
@@ -212,6 +207,9 @@ if host_system == 'windows'
         link_args: [
 
         ],
-        win_subsystem: 'windows'
+        win_subsystem: 'windows',
+        c_args: [
+            '-DGAME_LAUNCH_NAME=L"' + exe_name + '.exe"'
+        ],
     )
 endif

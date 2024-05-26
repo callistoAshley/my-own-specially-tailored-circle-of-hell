@@ -55,7 +55,7 @@ if host_system == 'windows'
 endif
 
 executable(
-    meson.project_name() + '-journal',
+    '_______',
     sources: sources,
     dependencies: [sdl3, cppzmq],
     link_args: link_args,

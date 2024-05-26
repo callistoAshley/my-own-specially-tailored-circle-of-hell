@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <zmq.hpp>
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -102,7 +103,6 @@ struct Ctx {
   zmq::socket_t sub_socket;
 
   SDL_Mutex *mutex;
-  SDL_Thread *thread;
 
   SDL_Renderer *renderer;
   SDL_Window *window;
@@ -207,6 +207,46 @@ int server_thread(void *data) {
   return 0;
 }
 
+int render_thread(void* data) {
+  Ctx *ctx = (Ctx *)data;
+
+  // I would move this into one line but apparently that leaves things uninitialized???
+  // C++ what the fuck
+  int old_window_x = INT32_MAX;
+  int old_window_y = INT32_MAX;
+  int window_x = 0;
+  int window_y = 0;
+
+  while (ctx->running) {
+    SDL_LockMutex(ctx->mutex);
+
+    SDL_GetWindowPosition(ctx->window, &window_x, &window_y);
+    if (old_window_x != window_x || old_window_y != window_y) {
+      old_window_x = window_x;
+      old_window_y = window_y;
+
+      Message message;
+      message.tag = Message::WindowPosition;
+      message.val.pos = { window_x, window_y };
+      zmq::message_t zmq_message(&message, sizeof(Message));
+      ctx->pub_socket.send(zmq_message, zmq::send_flags::dontwait);
+    }
+
+    SDL_RenderClear(ctx->renderer);
+    SDL_RenderTexture(ctx->renderer, ctx->texture, NULL, NULL);
+    SDL_RenderPresent(ctx->renderer);
+
+    SDL_ShowWindow(ctx->window);
+
+    SDL_UnlockMutex(ctx->mutex);
+
+    // calculates to 60 fps
+    SDL_Delay(1000 / 60);
+  }
+
+  return 0;
+}
+
 void journal_handling(const stbi_uc* initial_image_buf, size_t initial_image_buf_len) {
   // FIXME error handling
   SDL_Init(SDL_INIT_VIDEO);
@@ -242,39 +282,21 @@ void journal_handling(const stbi_uc* initial_image_buf, size_t initial_image_buf
 
   SDL_SetWindowHitTest(ctx.window, hit_test_fun, ctx.surface);
 
-  ctx.mutex = SDL_CreateMutex();
-  ctx.thread = SDL_CreateThread(server_thread, "server thread", &ctx);
-
   ctx.running = true;
 
+  ctx.mutex = SDL_CreateMutex();
+  SDL_CreateThread(server_thread, "server thread", &ctx);
+  SDL_CreateThread(render_thread, "render thread", &ctx);
+
+  SDL_Event event;
   while (ctx.running) {
-    SDL_Event event;
-    while (SDL_PollEvent(&event)) {
+    while (SDL_WaitEventTimeout(&event, 16)) {
       switch (event.type) {
       case SDL_EVENT_QUIT:
         ctx.running = false;
         break;
-      case SDL_EVENT_WINDOW_MOVED:
-        message.tag = Message::WindowPosition;
-        message.val.pos = { event.window.data1, event.window.data2 };
-        zmq_message.rebuild(&message, sizeof(Message));
-        ctx.pub_socket.send(zmq_message, zmq::send_flags::dontwait);
-        break;
       }
     }
-
-    SDL_LockMutex(ctx.mutex);
-
-    SDL_RenderClear(ctx.renderer);
-    SDL_RenderTexture(ctx.renderer, ctx.texture, NULL, NULL);
-    SDL_RenderPresent(ctx.renderer);
-
-    SDL_ShowWindow(ctx.window);
-
-    SDL_UnlockMutex(ctx.mutex);
-
-    // calculates to 60 fps
-    SDL_Delay(1000 / 60);
   }
 
   // tell oneshot we have closed
