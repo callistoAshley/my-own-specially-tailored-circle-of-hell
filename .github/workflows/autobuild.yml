@@ -33,6 +33,7 @@ jobs:
             mingw-w64-ucrt-x86_64-gcc
             mingw-w64-ucrt-x86_64-boost
             mingw-w64-ucrt-x86_64-egl-headers
+            mingw-w64-ucrt-x86_64-gles-headers
 
 
       - name: Checkout repository
