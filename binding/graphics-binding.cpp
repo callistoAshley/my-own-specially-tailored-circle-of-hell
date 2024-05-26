@@ -380,6 +380,25 @@ _rb_define_module_function(module, prop_name_s, graphics##Get##PropName); \
 _rb_define_module_function(module, prop_name_s "=", graphics##Set##PropName); \
 }
 
+RB_METHOD(smoothGetCompat) {
+    RB_UNUSED_PARAM;
+
+    return rb_bool_new(shState->graphics().getSmoothScaling() > 0);
+}
+
+RB_METHOD(smoothSetCompat) {
+    RB_UNUSED_PARAM;
+
+    bool value;
+    rb_get_args(argc, argv, "b", &value RB_ARG_END);
+
+    GFX_LOCK;
+    shState->graphics().setSmoothScaling(value ? 1 : 0);
+    GFX_UNLOCK;
+
+    return rb_bool_new(value);
+}
+
 void graphicsBindingInit()
 {
     VALUE module = rb_define_module("Graphics");
@@ -428,6 +447,6 @@ void graphicsBindingInit()
     INIT_GRA_PROP_BIND( LastMileScaling,  "last_mile_scaling"  );
     INIT_GRA_PROP_BIND( Threadsafe,       "thread_safe"        );
 
-    _rb_define_module_function(module, "smooth", graphicsGetSmoothScaling);
-    _rb_define_module_function(module, "smooth=", graphicsSetSmoothScaling);
+    _rb_define_module_function(module, "smooth", smoothGetCompat);
+    _rb_define_module_function(module, "smooth=", smoothSetCompat);
 }
