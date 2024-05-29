@@ -59,13 +59,13 @@ jobs:
           meson build
           cd build
           ninja
-          strip ./mkxp-z.exe
+          strip ./oneshot.exe
 
       - name: Prepare archive
         shell: msys2 {0}
         run: |
-          mkdir build/artifact
-          cd build/artifact
+          mkdir build/lib
+          cd build/lib
           cp /ucrt64/bin/zlib1.dll .
           cp ../../windows/build-ucrt64/bin/x64-msvcrt-ruby310.dll .
           cp -r ../../windows/build-ucrt64/lib/ruby/3.1.0 .
@@ -81,12 +81,12 @@ jobs:
         with:
           name: mkxp-z.windows.${{github.event_name == 'pull_request' && format('PR{0}', github.event.number) || github.ref_name}}-${{steps.short-sha.outputs.sha}}
           path: |
-            build/artifact/*.dll
-            build/artifact/*.exe
-            build/artifact/mkxp.json
-            build/artifact/LICENSE.mkxp-z-with-https.txt
-            build/artifact/scripts/
-            build/artifact/stdlib/
+            build/lib/*.dll
+            build/lib/*.exe
+            build/lib/mkxp.json
+            build/lib/LICENSE.mkxp-z-with-https.txt
+            build/lib/scripts/
+            build/lib/ruby/
 
   build-linux-native:
     name: Ubuntu 22.04 x86_64
@@ -120,26 +120,26 @@ jobs:
       - name: Build executable
         run: |
           source linux/vars.sh
-          meson build --bindir=. --prefix=$GITHUB_WORKSPACE/build/local
+          meson build --bindir=. --prefix=$GITHUB_WORKSPACE/build/lib
           cd build
           ninja
           ninja install
 
       - name: Prepare archive
         run: |
-          cd build/local
+          cd build/lib
           cp -r ../../linux/build-x86_64/lib/ruby/3.1.0 .
           mv ./3.1.0 ./lib/ruby
           cp ../../mkxp.json .
           cp -r ../../scripts .
           cp ../../assets/LICENSE.mkxp-z-with-https.txt .
           cd ..
-          zip -r local.zip local
+          zip -r lib.zip lib
 
       - uses: actions/upload-artifact@v3
         with:
           name: mkxp-z.linux.x86_64.${{github.event_name == 'pull_request' && format('PR{0}', github.event.number) || github.ref_name}}-${{steps.short-sha.outputs.sha}}
-          path: build/local.zip
+          path: build/lib.zip
 
   # We do not care about supporting either of these platforms.
   # build-linux-cross:
