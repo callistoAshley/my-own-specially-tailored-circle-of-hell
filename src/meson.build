@@ -196,7 +196,7 @@ main_source = files(
 
 global_sources += main_source
 
-audio_source = [
+audio_source = files(
     'audio/alstream.cpp',
     'audio/audio.cpp',
     'audio/audiostream.cpp',
@@ -206,7 +206,7 @@ audio_source = [
     'audio/sdlsoundsource.cpp',
     'audio/soundemitter.cpp',
     'audio/vorbissource.cpp',
-]
+)
 
 if disable_openal == false
     global_sources += audio_source
