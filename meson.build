@@ -28,6 +28,11 @@ global_args += '-DMKXPZ_VERSION="@0@"'.format(meson.project_version())
 global_args += '-DMKXPZ_GIT_HASH="@0@"'.format(git_hash)
 global_args += '-DHAVE_NANOSLEEP'
 
+disable_openal = get_option('disable_openal')
+if disable_openal
+    global_args += '-DMKXPZ_NO_OPENAL'
+endif
+
 global_args += '-DZMQ_STATIC'
 
 # ====================
@@ -193,7 +198,8 @@ executable(exe_name,
     objc_args: global_args,
     objcpp_args: global_args,
     win_subsystem: 'windows',
-    install: (host_system != 'windows')
+    install: (host_system != 'windows'),
+    build_rpath: '$ORIGIN'
 )
 
 # Shim for Windows

@@ -42,7 +42,9 @@ class FileSystem;
 class EventThread;
 class Graphics;
 class Input;
+#ifndef MKXPZ_NO_OPENAL
 class Audio;
+#endif
 class GLState;
 class TexPool;
 class Font;
@@ -50,7 +52,9 @@ class SharedFontState;
 struct GlobalIBO;
 struct Config;
 struct Vec2i;
+#ifndef MKXPZ_NO_OPENAL
 struct SharedMidiState;
+#endif
 
 class Oneshot;
 
@@ -72,7 +76,9 @@ struct SharedState
 
 	Graphics &graphics() const;
 	Input &input() const;
+#ifndef MKXPZ_NO_OPENAL
 	Audio &audio() const;
+#endif
 
 	Oneshot &oneshot() const;
 
@@ -84,7 +90,9 @@ struct SharedState
 
 	SharedFontState &fontState() const;
 	Font &defaultFont() const;
+#ifndef MKXPZ_NO_OPENAL
 	SharedMidiState &midiState() const;
+#endif
 
 	sigslot::signal<> prepareDraw;
 

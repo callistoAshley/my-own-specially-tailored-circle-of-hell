@@ -28,7 +28,6 @@ binding_source = [files(
     'plane-binding.cpp',
     'window-binding.cpp',
     'tilemap-binding.cpp',
-    'audio-binding.cpp',
     'module_rpg.cpp',
     'filesystem-binding.cpp',
     'windowvx-binding.cpp',
@@ -39,10 +38,18 @@ binding_source = [files(
     'oneshot-niko-binding.cpp',
     'oneshot-journal-binding.cpp',
     'oneshot-wallpaper-binding.cpp',
-    'modshot-aleffect-binding.cpp',
     'modshot-window-binding.cpp',
     'modshot-system-binding.cpp',
 )]
+
+audio_binding_source = [files(
+    'audio-binding.cpp',
+    'modshot-aleffect-binding.cpp',
+)]
+
+if disable_openal == false
+    binding_source += audio_binding_source
+endif
 
 if steamworks == true
     binding_source += files('cusl-binding.cpp')

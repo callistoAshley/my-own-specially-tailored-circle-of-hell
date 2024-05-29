@@ -23,11 +23,15 @@
 #include "icon.png.xxd"
 #endif
 
+#ifndef MKXPZ_NO_OPENAL
 #include <alc.h>
+#endif
 
 #include <SDL.h>
 #include <SDL_image.h>
+#ifndef MKXPZ_NO_OPENAL
 #include <SDL_sound.h>
+#endif
 #include <SDL_ttf.h>
 
 #include <assert.h>
@@ -129,6 +133,7 @@ int rgssThreadFun(void *userdata) {
 #endif
 
   /* Setup AL context */
+  #ifndef MKXPZ_NO_OPENAL
   ALCcontext *alcCtx = alcCreateContext(threadData->alcDev, 0);
 
   if (!alcCtx) {
@@ -137,12 +142,15 @@ int rgssThreadFun(void *userdata) {
   }
 
   alcMakeContextCurrent(alcCtx);
+  #endif
 
   try {
     SharedState::initInstance(threadData);
   } catch (const Exception &exc) {
     rgssThreadError(threadData, exc.msg);
+    #ifndef MKXPZ_NO_OPENAL
     alcDestroyContext(alcCtx);
+    #endif
 
     return 0;
   }
@@ -155,7 +163,9 @@ int rgssThreadFun(void *userdata) {
 
   SharedState::finiInstance();
 
+  #ifndef MKXPZ_NO_OPENAL
   alcDestroyContext(alcCtx);
+  #endif
 
   return 0;
 }
@@ -294,6 +304,7 @@ int main(int argc, char *argv[]) {
       return 0;
     }
 
+#ifndef MKXPZ_NO_OPENAL
     if (Sound_Init() == 0) {
       showInitError(std::string("Error initializing SDL_sound: ") +
                     Sound_GetError());
@@ -307,6 +318,7 @@ int main(int argc, char *argv[]) {
 
       return 0;
     }
+#endif
 #if defined(__WIN32__)
     WSAData wsadata = {0};
     if (WSAStartup(0x101, &wsadata) || wsadata.wVersion != 0x101) {
@@ -392,6 +404,7 @@ int main(int argc, char *argv[]) {
     (void)setupWindowIcon;
 #endif
 
+    #ifndef MKXPZ_NO_OPENAL
     ALCdevice *alcDev = alcOpenDevice(0);
 
     if (!alcDev) {
@@ -406,6 +419,7 @@ int main(int argc, char *argv[]) {
 #endif
       return 0;
     }
+    #endif
 
     SDL_DisplayMode mode;
     SDL_GetDisplayMode(0, 0, &mode);
@@ -422,8 +436,18 @@ int main(int argc, char *argv[]) {
     SDL_GLContext glCtx = NULL;
 #endif
 
-    RGSSThreadData rtData(&eventThread, argv[0], win, alcDev, mode.refresh_rate,
-                          mkxp_sys::getScalingFactor(), conf, glCtx);
+    RGSSThreadData rtData(
+      &eventThread, 
+      argv[0], 
+      win, 
+    #ifndef MKXPZ_NO_OPENAL
+      alcDev, 
+    #endif
+      mode.refresh_rate,
+      mkxp_sys::getScalingFactor(), 
+      conf, 
+      glCtx
+    );
 
     int winW, winH, drwW, drwH;
     SDL_GetWindowSize(win, &winW, &winH);
@@ -485,7 +509,9 @@ int main(int argc, char *argv[]) {
 
     Debug() << "Shutting down.";
 
+    #ifndef MKXPZ_NO_OPENAL
     alcCloseDevice(alcDev);
+    #endif
     SDL_DestroyWindow(win);
 
 #if defined(__WIN32__)
@@ -496,7 +522,9 @@ int main(int argc, char *argv[]) {
 #ifdef MKXPZ_STEAM
     STEAMSHIM_deinit();
 #endif
+#ifndef MKXPZ_NO_OPENAL
     Sound_Quit();
+#endif
     TTF_Quit();
     IMG_Quit();
     SDL_Quit();

@@ -1,11 +1,7 @@
 physfs = dependency('physfs', version: '>=2.1', static: build_static)
-openal = dependency('openal', static: build_static, method: 'pkg-config')
 theora = dependency('theora', static: build_static)
-vorbisfile = dependency('vorbisfile', static: build_static)
 vorbis = dependency('vorbis', static: build_static)
-ogg = dependency('ogg', static: build_static)
 sdl2 = dependency('SDL2', static: build_static)
-sdl_sound = compilers['cpp'].find_library('SDL2_sound')
 sdl2_ttf = dependency('SDL2_ttf', static: build_static)
 freetype = dependency('freetype2', static: build_static)
 pixman = dependency('pixman-1', static: build_static)
@@ -77,18 +73,36 @@ foreach l : explicit_libs.split(';')
         endif
 endforeach
 
-alcdev_struct = 'ALCdevice_struct'
-if openal.type_name() == 'pkgconfig'
-    if openal.version().version_compare('>=1.20.1')
-        alcdev_struct = 'ALCdevice'
+
+if disable_openal == false
+    vorbisfile = dependency('vorbisfile', static: build_static)
+    ogg = dependency('ogg', static: build_static)
+    openal = dependency('openal', static: build_static, method: 'pkg-config')
+    sdl_sound = compilers['cpp'].find_library('SDL2_sound')
+
+    global_dependencies += [vorbisfile, vorbis, ogg, openal, sdl_sound]
+
+    alcdev_struct = 'ALCdevice_struct'
+    if openal.type_name() == 'pkgconfig'
+        if openal.version().version_compare('>=1.20.1')
+            alcdev_struct = 'ALCdevice'
+        endif
+    endif
+
+    global_args += '-DMKXPZ_ALCDEVICE=' + alcdev_struct
+
+    if get_option('shared_fluid') == true
+        fluidsynth = dependency('fluidsynth', static: build_static)
+        add_project_arguments('-DSHARED_FLUID', language: 'cpp')
+        global_dependencies += fluidsynth
+        if host_system == 'windows'
+            global_dependencies += compilers['cpp'].find_library('dsound')
+        endif
     endif
 endif
 
-global_args += '-DMKXPZ_ALCDEVICE=' + alcdev_struct
-
 
 global_include_dirs += include_directories('.',
-    'audio',
     'crypto',
     'display', 'display/gl', 'display/libnsgif', 'display/libnsgif/utils',
     'etc',
@@ -100,7 +114,11 @@ global_include_dirs += include_directories('.',
     'util', 'util/sigslot', 'util/sigslot/adapter'
 )
 
-global_dependencies += [openal, zlib, bz2, sdl2, sdl_sound, pixman, physfs, theora, vorbisfile, vorbis, ogg, sdl2_ttf, freetype, sdl2_image, png, iconv, uchardet, cppzmq]
+if disable_openal == false
+    global_include_dirs += include_directories('audio')
+endif
+
+global_dependencies += [zlib, bz2, sdl2, pixman, physfs, theora, sdl2_ttf, freetype, sdl2_image, png, iconv, uchardet, cppzmq, vorbis]
 if host_system == 'windows'
     global_dependencies += compilers['cpp'].find_library('wsock32')
     global_dependencies += compilers['cpp'].find_library('winmm')
@@ -111,14 +129,6 @@ elif host_system == 'linux'
     global_dependencies += [dependency('gtk+-3.0'), dependency('libxfconf-0')]
 endif
 
-if get_option('shared_fluid') == true
-    fluidsynth = dependency('fluidsynth', static: build_static)
-    add_project_arguments('-DSHARED_FLUID', language: 'cpp')
-    global_dependencies += fluidsynth
-    if host_system == 'windows'
-        global_dependencies += compilers['cpp'].find_library('dsound')
-    endif
-endif
 
 if get_option('cjk_fallback_font') == true
     add_project_arguments('-DMKXPZ_CJK_FONT', language: 'cpp')
@@ -131,17 +141,6 @@ main_source = files(
     'settingsmenu.cpp',
     'sharedstate.cpp',
     
-    'audio/alstream.cpp',
-    'audio/audio.cpp',
-    'audio/audiostream.cpp',
-    'audio/audiochannels.cpp',
-    'audio/fluid-fun.cpp',
-    'audio/midisource.cpp',
-    'audio/sdlsoundsource.cpp',
-    'audio/soundemitter.cpp',
-    'audio/vorbissource.cpp',
-    'theoraplay/theoraplay.c',
-
     'crypto/rgssad.cpp',
 
     'display/autotiles.cpp',
@@ -191,9 +190,27 @@ main_source = files(
 
     'oneshot/oneshot.cpp',
     'oneshot/i18n.cpp',
+
+    'theoraplay/theoraplay.c',
 )
 
 global_sources += main_source
+
+audio_source = [
+    'audio/alstream.cpp',
+    'audio/audio.cpp',
+    'audio/audiostream.cpp',
+    'audio/audiochannels.cpp',
+    'audio/fluid-fun.cpp',
+    'audio/midisource.cpp',
+    'audio/sdlsoundsource.cpp',
+    'audio/soundemitter.cpp',
+    'audio/vorbissource.cpp',
+]
+
+if disable_openal == false
+    global_sources += audio_source
+endif
 
 if host_system == 'linux'
     global_sources += files('oneshot/xdg-user-dir-lookup.c')

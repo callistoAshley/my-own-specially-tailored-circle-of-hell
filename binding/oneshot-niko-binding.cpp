@@ -8,7 +8,11 @@
 #define NIKO_Y ((13 * 16) * 2)
 
 #include <filesystem>
+#ifdef __WIN32__
 #include <process.h>
+#else
+#include <unistd.h>
+#endif
 
 RB_METHOD(nikoPrepare) {
   RB_UNUSED_PARAM;
@@ -49,7 +53,14 @@ RB_METHOD(nikoStart) {
       const_cast<char*>(dir.c_str()), const_cast<char*>(window_x.c_str()),
       const_cast<char*>(window_y.c_str())};
 
+#ifdef __WIN32__
   spawnv(_P_DETACH, dir.c_str(), args);
+#else
+  pid_t pid = fork();
+  if (pid == 0) {
+    execv(dir.c_str(), args);
+  }
+#endif
 
   return Qnil;
 }

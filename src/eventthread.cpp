@@ -28,9 +28,11 @@
 #include <SDL_touch.h>
 #include <SDL_rect.h>
 
+#ifndef MKXPZ_NO_OPENAL
 #include <al.h>
 #include <alc.h>
 #include <alext.h>
+#endif
 #include <cmath>
 
 #include "sharedstate.h"
@@ -45,7 +47,9 @@
 #include "TouchBar.h"
 #endif
 
+#ifndef MKXPZ_NO_OPENAL
 #include "al-util.h"
+#endif
 #include "debugwriter.h"
 
 #ifndef __APPLE__
@@ -54,6 +58,7 @@
 
 #include <string.h>
 
+#ifndef MKXPZ_NO_OPENAL
 typedef void (ALC_APIENTRY *LPALCDEVICEPAUSESOFT) (ALCdevice *device);
 typedef void (ALC_APIENTRY *LPALCDEVICERESUMESOFT) (ALCdevice *device);
 
@@ -82,6 +87,7 @@ initALCFunctions(ALCdevice *alcDev)
 }
 
 #define HAVE_ALC_DEVICE_PAUSE alc.DevicePause
+#endif
 
 uint8_t EventThread::keyStates[];
 EventThread::ControllerState EventThread::controllerState;
@@ -156,7 +162,9 @@ void EventThread::process(RGSSThreadData &rtData)
     UnidirMessage<Vec2i> &windowSizeMsg = rtData.windowSizeMsg;
     UnidirMessage<Vec2i> &drawableSizeMsg = rtData.drawableSizeMsg;
     
+    #ifndef MKXPZ_NO_OPENAL
     initALCFunctions(rtData.alcDev);
+    #endif
     
     // XXX this function breaks input focus on OSX
 #ifndef __APPLE__
@@ -642,8 +650,10 @@ int EventThread::eventFilter(void *data, SDL_Event *event)
         case SDL_APP_WILLENTERBACKGROUND :
             Debug() << "SDL_APP_WILLENTERBACKGROUND";
             
+            #ifndef MKXPZ_NO_OPENAL
             if (HAVE_ALC_DEVICE_PAUSE)
                 alc.DevicePause(rtData.alcDev);
+            #endif
             
             rtData.syncPoint.haltThreads();
             
@@ -660,8 +670,10 @@ int EventThread::eventFilter(void *data, SDL_Event *event)
         case SDL_APP_DIDENTERFOREGROUND :
             Debug() << "SDL_APP_DIDENTERFOREGROUND";
             
+            #ifndef MKXPZ_NO_OPENAL
             if (HAVE_ALC_DEVICE_PAUSE)
                 alc.DeviceResume(rtData.alcDev);
+            #endif
             
             rtData.syncPoint.resumeThreads();
             

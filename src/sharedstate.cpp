@@ -25,7 +25,9 @@
 #include "filesystem.h"
 #include "graphics.h"
 #include "input.h"
+#ifndef MKXPZ_NO_OPENAL
 #include "audio.h"
+#endif
 #include "glstate.h"
 #include "shader.h"
 #include "texpool.h"
@@ -36,7 +38,9 @@
 #include "quad.h"
 #include "binding.h"
 #include "exception.h"
+#ifndef MKXPZ_NO_OPENAL
 #include "sharedmidistate.h"
+#endif
 
 #include "oneshot.h"
 
@@ -74,11 +78,15 @@ struct SharedStatePrivate
 	RGSSThreadData &rtData;
 	Config &config;
 
+#ifndef MKXPZ_NO_OPENAL
 	SharedMidiState midiState;
+#endif
 
 	Graphics graphics;
 	Input input;
+	#ifndef MKXPZ_NO_OPENAL
 	Audio audio;
+	#endif
 
 	Oneshot oneshot;
 
@@ -112,10 +120,14 @@ struct SharedStatePrivate
 	      eThread(*threadData->ethread),
 	      rtData(*threadData),
 	      config(threadData->config),
+#ifndef MKXPZ_NO_OPENAL
 	      midiState(threadData->config),
+#endif
 	      graphics(threadData),
 	      input(*threadData),
+				#ifndef MKXPZ_NO_OPENAL
 	      audio(*threadData),
+				#endif
 				oneshot(*threadData),
 	      _glState(threadData->config),
 	      fontState(threadData->config),
@@ -171,8 +183,10 @@ struct SharedStatePrivate
 
 		/* RGSS3 games will call setup_midi, so there's
 		 * no need to do it on startup */
+		#ifndef MKXPZ_NO_OPENAL
 		if (rgssVer <= 2)
 			midiState.initIfNeeded(threadData->config);
+		#endif
 	}
 
 	~SharedStatePrivate()
@@ -244,14 +258,18 @@ GSATT(RGSSThreadData&, rtData)
 GSATT(Config&, config)
 GSATT(Graphics&, graphics)
 GSATT(Input&, input)
+#ifndef MKXPZ_NO_OPENAL
 GSATT(Audio&, audio)
+#endif
 GSATT(Oneshot&, oneshot)
 GSATT(GLState&, _glState)
 GSATT(ShaderSet&, shaders)
 GSATT(TexPool&, texPool)
 GSATT(Quad&, gpQuad)
 GSATT(SharedFontState&, fontState)
+#ifndef MKXPZ_NO_OPENAL
 GSATT(SharedMidiState&, midiState)
+#endif
 
 void SharedState::setBindingData(void *data)
 {

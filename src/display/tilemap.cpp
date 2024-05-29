@@ -744,13 +744,8 @@ struct TilemapPrivate
 
 	void handleTile(int x, int y, int z)
 	{
-		int ox = x + viewpPos.x;
-		int oy = y + viewpPos.y;
-		if (!wrapping && (ox < 0 || oy < 0 || ox >= mapData->xSize() || oy >= mapData->ySize()))
-			return;
-
 		int tileInd =
-			tableGetWrapped(*mapData, ox, oy, z);
+			tableGetWrapped(*mapData, x + viewpPos.x, y + viewpPos.y, z);
 
 		/* Check for empty space */
 		if (tileInd < 48)

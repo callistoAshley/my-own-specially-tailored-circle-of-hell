@@ -19,7 +19,9 @@
  ** along with mkxp.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef MKXPZ_NO_OPENAL
 #include "audio/audio.h"
+#endif
 #include "filesystem/filesystem.h"
 #include "display/graphics.h"
 #include "display/font.h"
@@ -89,7 +91,9 @@ void windowVXBindingInit();
 void tilemapVXBindingInit();
 
 void inputBindingInit();
+#ifndef MKXPZ_NO_OPENAL
 void audioBindingInit();
+#endif
 void graphicsBindingInit();
 
 void fileIntBindingInit();
@@ -113,7 +117,9 @@ void oneshotWallpaperBindingInit();
 void oneshotWallpaperBindingTerminate();
 #endif
 
+#ifndef MKXPZ_NO_OPENAL
 void modshotAleffectBindingInit();
+#endif
 void modshotwindowBindingInit();
 void modshotSystemBindingInit();
 
@@ -187,7 +193,9 @@ static void mriBindingInit() {
     }
     
     inputBindingInit();
+#ifndef MKXPZ_NO_OPENAL
     audioBindingInit();
+#endif
     graphicsBindingInit();
     
     fileIntBindingInit();
@@ -208,7 +216,9 @@ static void mriBindingInit() {
     oneshotNikoBindingInit();
     oneshotWallpaperBindingInit();
 
+#ifndef MKXPZ_NO_OPENAL
     modshotAleffectBindingInit();
+#endif
     modshotwindowBindingInit();
     modshotSystemBindingInit();
 
@@ -793,7 +803,9 @@ static VALUE rgssMainRescue(VALUE arg, VALUE exc) {
 
 static void processReset() {
     shState->graphics().reset();
+#ifndef MKXPZ_NO_OPENAL
     shState->audio().reset();
+#endif
     
     shState->rtData().rqReset.clear();
     shState->graphics().repaintWait(shState->rtData().rqResetFinish, false);

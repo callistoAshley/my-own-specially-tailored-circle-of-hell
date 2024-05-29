@@ -21,8 +21,10 @@
 
 #include "graphics.h"
 
+#ifndef MKXPZ_NO_OPENAL
 #include "alstream.h"
 #include "audio.h"
+#endif
 #include "binding.h"
 #include "bitmap.h"
 #include "config.h"
@@ -102,24 +104,33 @@ static void closeMovie(THEORAPLAY_Io *io)
 struct Movie
 {
     THEORAPLAY_Decoder *decoder;
-    const THEORAPLAY_AudioPacket *audio;
     const THEORAPLAY_VideoFrame *video;
     bool hasVideo;
-    bool hasAudio;
     bool skippable;
     Bitmap *videoBitmap;
     SDL_RWops srcOps;
+    #ifndef MKXPZ_NO_OPENAL
+    bool hasAudio;
     SDL_Thread *audioThread;
     AtomicFlag audioThreadTermReq;
     volatile AudioQueue *audioQueueHead;
     volatile AudioQueue *audioQueueTail;
+    const THEORAPLAY_AudioPacket *audio;
     ALuint audioSource;
     ALuint alBuffers[STREAM_BUFS];
     ALshort audioBuffer[MOVIE_AUDIO_BUFFER_SIZE];
+    #endif
     SDL_mutex *audioMutex;
     
     Movie(bool skippable_)
-    : decoder(0), audio(0), video(0), skippable(skippable_), videoBitmap(0), audioThread(0)
+    :   decoder(0), 
+        video(0), 
+        skippable(skippable_), 
+        videoBitmap(0)
+        #ifndef MKXPZ_NO_OPENAL
+        , audioThread(0), 
+        audio(0)
+        #endif
     {
     }
     bool preparePlayback()
@@ -148,9 +159,10 @@ struct Movie
         }
         
         // Once we're initialized, we can tell if this file has audio and/or video.
-        hasAudio = THEORAPLAY_hasAudioStream(decoder);
         hasVideo = THEORAPLAY_hasVideoStream(decoder);
         
+        #ifndef MKXPZ_NO_OPENAL
+        hasAudio = THEORAPLAY_hasAudioStream(decoder);
         // Queue up the audio
         if (hasAudio) {
             while ((audio = THEORAPLAY_getAudio(decoder)) == NULL) {
@@ -160,6 +172,7 @@ struct Movie
                 SDL_Delay(VIDEO_DELAY);
             }
         }
+        #endif
         
         // No video, so no point in doing anything else
         if (!hasVideo) {
@@ -172,6 +185,7 @@ struct Movie
             SDL_Delay(VIDEO_DELAY);
         }
         
+        #ifndef MKXPZ_NO_OPENAL
         // Wait until we have audio, if applicable
         audio = NULL;
         if (hasAudio) {
@@ -179,15 +193,19 @@ struct Movie
                 SDL_Delay(VIDEO_DELAY);
             }
         }
+        #endif 
+
         // Create this Bitmap without a hires replacement, because we don't
         // support hires replacement for Movies yet.
         videoBitmap = new Bitmap(video->width, video->height, true);
+        #ifndef MKXPZ_NO_OPENAL
         audioQueueHead = NULL;
         audioQueueTail = NULL;
+        #endif
         
         return true;
     }
-    
+#ifndef MKXPZ_NO_OPENAL
     void queueAudioPacket(const THEORAPLAY_AudioPacket *audio) {
         AudioQueue *item = NULL;
         
@@ -313,12 +331,14 @@ struct Movie
 
         return true;
     }
-    
+#endif
     void play(float volume)
     {
         Uint32 frameMs = 0;
         Uint32 baseTicks = SDL_GetTicks();
+        #ifndef MKXPZ_NO_OPENAL
         bool openedAudio = false;
+        #endif
         while (THEORAPLAY_isDecoding(decoder)) {
             // Check for reset/shutdown input
             if(shState->graphics().updateMovieInput(this)) break;
@@ -335,6 +355,7 @@ struct Movie
                 video = THEORAPLAY_getVideo(decoder);
             }
             
+            #ifndef MKXPZ_NO_OPENAL
             if (hasAudio) {
                 if (!audio) {
                     audio = THEORAPLAY_getAudio(decoder);
@@ -349,6 +370,7 @@ struct Movie
                 }
                 
             }
+            #endif
             
             if (video && (video->playms <= now)) {
                 frameMs = (video->fps == 0.0) ? 0 : ((Uint32) (1000.0 / video->fps));
@@ -385,14 +407,17 @@ struct Movie
                 SDL_Delay(VIDEO_DELAY);
             }
             
+            #ifndef MKXPZ_NO_OPENAL
             if (openedAudio) {
                 bufferMovieAudio(decoder, now);
             }
+            #endif
         }
     }
     
     ~Movie()
     {
+    #ifndef MKXPZ_NO_OPENAL
         if (hasAudio) {
             if (audioQueueTail) {
                 THEORAPLAY_freeAudio(audioQueueTail->audio);
@@ -413,8 +438,9 @@ struct Movie
             alDeleteSources(1, &audioSource);
             alDeleteBuffers(STREAM_BUFS, alBuffers);
         }
-        if (video) THEORAPLAY_freeVideo(video);
         if (audio) THEORAPLAY_freeAudio(audio);
+    #endif
+        if (video) THEORAPLAY_freeVideo(video);
         if (decoder) THEORAPLAY_stopDecode(decoder);
         delete videoBitmap;
     }
