@@ -164,7 +164,7 @@ if steamworks == true
     endif
 
     shim_args = [
-        '-DGAME_LAUNCH_NAME="' + exe_name + '"',
+        '-DGAME_LAUNCH_NAME="lib/' + exe_name + '"',
         '-I' + steamworks_path + '/public'
         ]
 
@@ -179,13 +179,15 @@ if steamworks == true
         shim_ws = 'windows'
     endif
 
-    executable(meson.project_name(),
+    executable('steamshim',
         sources: files('steamshim/steamshim_parent.cpp'),
         dependencies: steamlib,
         cpp_args: shim_args,
         link_args: la.split(),
         win_subsystem: shim_ws,
-        install: (host_system != 'windows'))
+        install: (host_system != 'windows'),
+        build_rpath: '$ORIGIN'
+    )
 endif
 
 executable(exe_name,
