@@ -19,6 +19,8 @@ public:
   }
 
   void composite() {
+    shState->prepareDraw();
+
     glState.viewport.set(IntRect(0, 0, 480, 480));
 
     FBO::bind(tex.fbo);
@@ -81,11 +83,14 @@ RB_METHOD(screenWindowDispose) {
 RB_METHOD(screenWindowDraw) {
   ScreenWindow* w = getPrivateData<ScreenWindow>(self);
 
+  GFX_LOCK;
+
   GUARD_DISPOSED(w);
 
   SDL_GLContext ctx = shState->graphics().context();
   int err = SDL_GL_MakeCurrent(w->window, ctx);
   if (err != 0) {
+    GFX_UNLOCK;
     rb_raise(rb_eRuntimeError, "Failed to make window current: %s", SDL_GetError());
   }
 
@@ -101,6 +106,8 @@ RB_METHOD(screenWindowDraw) {
   GLMeta::blitEnd();
 
   SDL_GL_SwapWindow(w->window); 
+
+  GFX_UNLOCK;
 
   return Qnil;
 }
