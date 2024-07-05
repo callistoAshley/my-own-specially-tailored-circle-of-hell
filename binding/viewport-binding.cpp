@@ -39,8 +39,8 @@ DEF_ALLOCFUNC(Viewport);
 
 // oh yes. this is awful. there should be a header for this
 // more fun this way :3
-extern rb_data_type_t ScreenWindowType;
-struct ScreenWindow {
+extern rb_data_type_t MonitorWindowType;
+struct MonitorWindow {
     Scene* getScene();
 };
 
@@ -53,33 +53,33 @@ RB_METHOD(viewportInitialize) {
     // could either be a Rect or a Window
     } else if (argc == 1 || argc == 2) {
         VALUE rectObj;
-        VALUE screenWindowObj = Qnil;
+        VALUE monitorWindowObj = Qnil;
         Rect *rect;
         
-        rb_get_args(argc, argv, "o|o", &rectObj, &screenWindowObj RB_ARG_END);
+        rb_get_args(argc, argv, "o|o", &rectObj, &monitorWindowObj RB_ARG_END);
         
         rect = getPrivateDataCheck<Rect>(rectObj, RectType);
 
         Scene *scene = nullptr;
-        if (!NIL_P(screenWindowObj)) {
-            ScreenWindow* window = getPrivateDataCheck<ScreenWindow>(screenWindowObj, ScreenWindowType);
+        if (!NIL_P(monitorWindowObj)) {
+            MonitorWindow* window = getPrivateDataCheck<MonitorWindow>(monitorWindowObj, MonitorWindowType);
             scene = window->getScene();
-            rb_iv_set(self, "screen_window", screenWindowObj); // so it doesn't get GC'd
+            rb_iv_set(self, "screen_window", monitorWindowObj); // so it doesn't get GC'd
         }
         
         GFX_LOCK;
         v = new Viewport(rect, scene);
     } else {
         int x, y, width, height;
-        VALUE screenWindowObj = Qnil;
+        VALUE monitorWindowObj = Qnil;
 
-        rb_get_args(argc, argv, "iiii|o", &x, &y, &width, &height, &screenWindowObj RB_ARG_END);
+        rb_get_args(argc, argv, "iiii|o", &x, &y, &width, &height, &monitorWindowObj RB_ARG_END);
 
         Scene *scene = nullptr;
-        if (!NIL_P(screenWindowObj)) {
-            ScreenWindow* window = getPrivateDataCheck<ScreenWindow>(screenWindowObj, ScreenWindowType);
+        if (!NIL_P(monitorWindowObj)) {
+            MonitorWindow* window = getPrivateDataCheck<MonitorWindow>(monitorWindowObj, MonitorWindowType);
             scene = window->getScene();
-            rb_iv_set(self, "screen_window", screenWindowObj); // so it doesn't get GC'd
+            rb_iv_set(self, "screen_window", monitorWindowObj); // so it doesn't get GC'd
         }
         
         GFX_LOCK;

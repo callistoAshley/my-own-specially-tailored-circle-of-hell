@@ -285,14 +285,14 @@ public:
   }
 };
 
-struct ScreenWindow {
+struct MonitorWindow {
   SDL_Window* window;
   WindowScene scene;
 
-  ScreenWindow(int x, int y, int w, int h, unsigned int flags) : scene(w, h) {
+  MonitorWindow(int x, int y, int w, int h, unsigned int flags) : scene(w, h) {
     window = SDL_CreateWindow("Test", x, y, w, h, flags);
   }
-  ~ScreenWindow() {
+  ~MonitorWindow() {
     if (window)
       SDL_DestroyWindow(window);
   }
@@ -300,15 +300,15 @@ struct ScreenWindow {
   Scene* getScene();
 };
 // so we can use this from outside this file
-Scene* ScreenWindow::getScene() {
+Scene* MonitorWindow::getScene() {
   return &scene;
 }
 
-DEF_TYPE_CUSTOMNAME(ScreenWindow, "Screen::Window");
+DEF_TYPE_CUSTOMNAME(MonitorWindow, "MonitorWindow");
 
 #define GUARD_DISPOSED(w) if (!w->window) rb_raise(rb_eRuntimeError, "Window already disposed!");
 
-RB_METHOD(screenWindowInit) {
+RB_METHOD(monitorWindowInit) {
   VALUE vx, vy, vw, vh;
   VALUE kwargs;
   rb_scan_args(argc, argv, "4:", &vx, &vy, &vw, &vh, &kwargs);
@@ -340,15 +340,15 @@ RB_METHOD(screenWindowInit) {
       flags |= SDL_WINDOW_FULLSCREEN; // not fullscreen by default
   }
 
-  ScreenWindow* window = new ScreenWindow(x, y, w, h, flags);
+  MonitorWindow* window = new MonitorWindow(x, y, w, h, flags);
 
   setPrivateData(self, window);
 
   return self;
 }
 
-RB_METHOD(screenWindowDispose) {
-  ScreenWindow* w = getPrivateData<ScreenWindow>(self);
+RB_METHOD(monitorWindowDispose) {
+  MonitorWindow* w = getPrivateData<MonitorWindow>(self);
 
   delete w;
   setPrivateData(self, nullptr);
@@ -356,8 +356,8 @@ RB_METHOD(screenWindowDispose) {
   return Qnil;
 }
 
-RB_METHOD(screenWindowDraw) {
-  ScreenWindow* window = getPrivateData<ScreenWindow>(self);
+RB_METHOD(monitorWindowDraw) {
+  MonitorWindow* window = getPrivateData<MonitorWindow>(self);
 
   GFX_LOCK;
 
@@ -394,8 +394,8 @@ RB_METHOD(screenWindowDraw) {
   return Qnil;
 }
 
-RB_METHOD(screenWindowResize) {
-  ScreenWindow* window = getPrivateData<ScreenWindow>(self);
+RB_METHOD(monitorWindowResize) {
+  MonitorWindow* window = getPrivateData<MonitorWindow>(self);
 
   GUARD_DISPOSED(window);
 
@@ -411,8 +411,8 @@ RB_METHOD(screenWindowResize) {
   return Qnil;
 }
 
-RB_METHOD(screenWindowMove) {
-  ScreenWindow* window = getPrivateData<ScreenWindow>(self);
+RB_METHOD(monitorWindowMove) {
+  MonitorWindow* window = getPrivateData<MonitorWindow>(self);
 
   GUARD_DISPOSED(window);
 
@@ -425,18 +425,17 @@ RB_METHOD(screenWindowMove) {
 }
 
 void osfmBindingInit() {
-  VALUE module = rb_define_module("Screen");
 
-  VALUE klass = rb_define_class_under(module, "Window", rb_cObject);
-  rb_define_alloc_func(klass, classAllocate<&ScreenWindowType>);
+  VALUE klass = rb_define_class("MonitorWindow", rb_cObject);
+  rb_define_alloc_func(klass, classAllocate<&MonitorWindowType>);
 
-  _rb_define_method(klass, "initialize", screenWindowInit);
-  _rb_define_method(klass, "dispose", screenWindowDispose);
-  _rb_define_method(klass, "draw", screenWindowDraw);
-  _rb_define_method(klass, "resize", screenWindowResize);
-  _rb_define_method(klass, "move", screenWindowMove);
+  _rb_define_method(klass, "initialize", monitorWindowInit);
+  _rb_define_method(klass, "dispose", monitorWindowDispose);
+  _rb_define_method(klass, "draw", monitorWindowDraw);
+  _rb_define_method(klass, "resize", monitorWindowResize);
+  _rb_define_method(klass, "move", monitorWindowMove);
 
-  rb_define_const(module, "UNDEFINED_POS", INT2NUM(SDL_WINDOWPOS_UNDEFINED));
-  rb_define_const(module, "CENTERED_POS", INT2NUM(SDL_WINDOWPOS_CENTERED));
+  rb_define_const(klass, "UNDEFINED_POS", INT2NUM(SDL_WINDOWPOS_UNDEFINED));
+  rb_define_const(klass, "CENTERED_POS", INT2NUM(SDL_WINDOWPOS_CENTERED));
 
 }
