@@ -1,5 +1,4 @@
 #include <SDL2/SDL.h>
-#include "SDL_video.h"
 #include "etc-internal.h"
 #include "gl-fun.h"
 #include "gl-util.h"
@@ -85,7 +84,7 @@ RB_METHOD(screenWindowInit) {
   int w = NUM2INT(vw);
   int h = NUM2INT(vh);
 
-  unsigned int flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SKIP_TASKBAR | SDL_WINDOW_BORDERLESS;
+  unsigned int flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SKIP_TASKBAR | SDL_WINDOW_BORDERLESS | SDL_WINDOW_TRANSPARENT;
   if (!NIL_P(kwargs)) {
     ID table[4] = {
       rb_intern("borderless"),
