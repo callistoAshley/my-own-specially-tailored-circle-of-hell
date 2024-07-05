@@ -378,6 +378,22 @@ inline void rb_int_arg(VALUE arg, int *out, int argPos = 0) {
     }
 }
 
+inline void rb_uint_arg(VALUE arg, unsigned int *out, int argPos = 0) {
+    switch (rb_type(arg)) {
+        case RUBY_T_FLOAT:
+            // FIXME check int range?
+            *out = NUM2ULONG(arg);
+            break;
+            
+        case RUBY_T_FIXNUM:
+            *out = FIX2UINT(arg);
+            break;
+            
+        default:
+            rb_raise(rb_eTypeError, "Argument %d: Expected fixnum", argPos);
+    }
+}
+
 inline void rb_bool_arg(VALUE arg, bool *out, int argPos = 0) {
     switch (rb_type(arg)) {
         case RUBY_T_TRUE:

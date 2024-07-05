@@ -188,6 +188,19 @@ int rb_get_args(int argc, VALUE *argv, const char *format, ...) {
       break;
     }
 
+    case 'u': {
+      if (argI >= argc)
+        break;
+
+      unsigned int *u = va_arg(ap, unsigned int *);
+      VALUE uVal = *arg++;
+
+      rb_uint_arg(uVal, u, argI);
+
+      ++argI;
+      break;
+    }
+
     case 'i': {
       if (argI >= argc)
         break;
