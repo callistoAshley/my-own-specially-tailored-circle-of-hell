@@ -1919,3 +1919,8 @@ const TEX::ID &Graphics::obscuredTex() const
 {
 	return p->obscuredTex;
 }
+
+SDL_GLContext Graphics::context() const
+{
+    return p->glCtx;
+}

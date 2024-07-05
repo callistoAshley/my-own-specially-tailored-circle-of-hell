@@ -23,6 +23,10 @@
 #include "binding-util.h"
 #include "disposable-binding.h"
 #include "flashable-binding.h"
+#include "ruby/internal/core/rtypeddata.h"
+#include "ruby/internal/intern/object.h"
+#include "ruby/internal/special_consts.h"
+#include "scene.h"
 #include "sceneelement-binding.h"
 #include "sharedstate.h"
 #include "viewport.h"
@@ -33,30 +37,53 @@ DEF_TYPE(Viewport);
 DEF_ALLOCFUNC(Viewport);
 #endif
 
+// oh yes. this is awful. there should be a header for this
+// more fun this way :3
+extern rb_data_type_t ScreenWindowType;
+struct ScreenWindow {
+    Scene* getScene();
+};
+
 RB_METHOD(viewportInitialize) {
     Viewport *v;
-    
+
     if (argc == 0 && rgssVer >= 3) {
         GFX_LOCK;
         v = new Viewport();
-    } else if (argc == 1) {
-        /* The rect arg is only used to init the viewport,
-         * and does NOT replace its 'rect' property */
+    // could either be a Rect or a Window
+    } else if (argc == 1 || argc == 2) {
         VALUE rectObj;
+        VALUE screenWindowObj = Qnil;
         Rect *rect;
         
-        rb_get_args(argc, argv, "o", &rectObj RB_ARG_END);
+        rb_get_args(argc, argv, "o|o", &rectObj, &screenWindowObj RB_ARG_END);
         
         rect = getPrivateDataCheck<Rect>(rectObj, RectType);
+
+        Scene *scene = nullptr;
+        if (!NIL_P(screenWindowObj)) {
+            ScreenWindow* window = getPrivateDataCheck<ScreenWindow>(screenWindowObj, ScreenWindowType);
+            scene = window->getScene();
+            rb_iv_set(self, "screen_window", screenWindowObj); // so it doesn't get GC'd
+        }
         
         GFX_LOCK;
-        v = new Viewport(rect);
+        v = new Viewport(rect, scene);
     } else {
         int x, y, width, height;
+        VALUE screenWindowObj = Qnil;
+
+        rb_get_args(argc, argv, "iiii|o", &x, &y, &width, &height, &screenWindowObj RB_ARG_END);
+
+        Scene *scene = nullptr;
+        if (!NIL_P(screenWindowObj)) {
+            ScreenWindow* window = getPrivateDataCheck<ScreenWindow>(screenWindowObj, ScreenWindowType);
+            scene = window->getScene();
+            rb_iv_set(self, "screen_window", screenWindowObj); // so it doesn't get GC'd
+        }
         
-        rb_get_args(argc, argv, "iiii", &x, &y, &width, &height RB_ARG_END);
         GFX_LOCK;
-        v = new Viewport(x, y, width, height);
+        v = new Viewport(x, y, width, height, scene);
     }
     
     setPrivateData(self, v);

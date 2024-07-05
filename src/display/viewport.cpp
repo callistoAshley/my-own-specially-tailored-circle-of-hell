@@ -21,6 +21,7 @@
 
 #include "viewport.h"
 
+#include "scene.h"
 #include "sharedstate.h"
 #include "etc.h"
 #include "util.h"
@@ -111,22 +112,22 @@ struct ViewportPrivate
 	}
 };
 
-Viewport::Viewport(int x, int y, int width, int height)
-    : SceneElement(*shState->screen()),
+Viewport::Viewport(int x, int y, int width, int height, Scene *scene)
+    : SceneElement(scene ? *scene : *shState->screen()),
       sceneLink(this)
 {
 	initViewport(x, y, width, height);
 }
 
-Viewport::Viewport(Rect *rect)
-    : SceneElement(*shState->screen()),
+Viewport::Viewport(Rect *rect, Scene *scene)
+    : SceneElement(scene ? *scene : *shState->screen()),
       sceneLink(this)
 {
 	initViewport(rect->x, rect->y, rect->width, rect->height);
 }
 
-Viewport::Viewport()
-    : SceneElement(*shState->screen()),
+Viewport::Viewport(Scene *scene)
+    : SceneElement(scene ? *scene : *shState->screen()),
       sceneLink(this)
 {
 	const Graphics &graphics = shState->graphics();

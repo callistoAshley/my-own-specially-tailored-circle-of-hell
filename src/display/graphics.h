@@ -101,6 +101,8 @@ public:
     void lock(bool force = false);
     void unlock(bool force = false);
 
+		SDL_GLContext context() const;
+
 private:
 	Graphics(RGSSThreadData *data);
 	~Graphics();

@@ -40,6 +40,7 @@ binding_source = [files(
     'oneshot-wallpaper-binding.cpp',
     'modshot-window-binding.cpp',
     'modshot-system-binding.cpp',
+    'osfm-screen-binding.cpp',
 )]
 
 audio_binding_source = [files(

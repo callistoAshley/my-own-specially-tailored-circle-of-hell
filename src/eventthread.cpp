@@ -691,6 +691,12 @@ int EventThread::eventFilter(void *data, SDL_Event *event)
             return 0;
         /* Workaround for Windows pausing on drag */
         case SDL_WINDOWEVENT:
+            {
+                unsigned int win_id = SDL_GetWindowID(rtData.window);
+                if (win_id != event->window.windowID) // filter out events from other windows
+                    return 0;
+            }
+
             if (event->window.event == SDL_WINDOWEVENT_MOVED)
             {
                 if (shState != NULL && shState->rgssVersion > 0)

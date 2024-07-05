@@ -32,9 +32,9 @@ struct ViewportPrivate;
 class Viewport : public Scene, public SceneElement, public Flashable, public Disposable
 {
 public:
-	Viewport(int x, int y, int width, int height);
-	Viewport(Rect *rect);
-	Viewport();
+	Viewport(int x, int y, int width, int height, Scene* scene = 0);
+	Viewport(Rect *rect, Scene* scene = 0);
+	Viewport(Scene* scene = 0);
 	~Viewport();
 
 	void update();
