@@ -3,21 +3,79 @@
 #include "gl-fun.h"
 #include "gl-util.h"
 #include "gl-meta.h"
-#include "texpool.h"
+#include "quad.h"
 #include "graphics.h"
 #include "scene.h"
 #include "binding-util.h"
 #include "sharedstate.h"
 
+struct PingPong {
+    TEXFBO rt[2];
+    uint8_t srcInd, dstInd;
+    int screenW, screenH;
+    
+    PingPong(int screenW, int screenH)
+    : srcInd(0), dstInd(1), screenW(screenW), screenH(screenH) {
+        for (int i = 0; i < 2; ++i) {
+            TEXFBO::init(rt[i]);
+            TEXFBO::allocEmpty(rt[i], screenW, screenH);
+            TEXFBO::linkFBO(rt[i]);
+            gl.ClearColor(0, 0, 0, 1);
+            FBO::clear();
+        }
+    }
+    
+    ~PingPong() {
+        for (int i = 0; i < 2; ++i)
+            TEXFBO::fini(rt[i]);
+    }
+    
+    TEXFBO &backBuffer() { return rt[srcInd]; }
+    
+    TEXFBO &frontBuffer() { return rt[dstInd]; }
+    
+    /* Better not call this during render cycles */
+    void resize(int width, int height) {
+        screenW = width;
+        screenH = height;
+        
+        for (int i = 0; i < 2; ++i)
+            TEXFBO::allocEmpty(rt[i], width, height);
+    }
+    
+    void startRender() { bind(); }
+    
+    void swapRender() {
+        std::swap(srcInd, dstInd);
+        
+        bind();
+    }
+    
+    void clearBuffers() {
+        glState.clearColor.pushSet(Vec4(0, 0, 0, 1));
+        
+        for (int i = 0; i < 2; ++i) {
+            FBO::bind(rt[i].fbo);
+            FBO::clear();
+        }
+        
+        glState.clearColor.pop();
+    }
+    
+private:
+    void bind() { FBO::bind(rt[dstInd].fbo); }
+};
 
 class WindowScene : public Scene {
 public:
-  TEXFBO tex;
+  PingPong pp;
+  Quad screenQuad;
 
-  WindowScene(int w, int h) {
+  WindowScene(int w, int h): pp(w, h) {
     geometry.rect.w = w;
     geometry.rect.h = h;
-    tex = shState->texPool().request(w, h);
+
+    screenQuad.setTexPosRect(geometry.rect, geometry.rect);
   }
 
   void composite() {
@@ -27,10 +85,9 @@ public:
 
     glState.viewport.set(IntRect(0, 0, geometry.rect.w, geometry.rect.h));
 
-    FBO::bind(tex.fbo);
+    pp.startRender();
 
     gl.ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    
     FBO::clear();
 
     Scene::composite();
@@ -40,14 +97,191 @@ public:
     geometry.rect.w = w;
     geometry.rect.h = h;
 
-    shState->texPool().release(tex);
-    tex = shState->texPool().request(w, h);
+    pp.resize(w, h);
+    screenQuad.setTexPosRect(geometry.rect, geometry.rect);
 
     notifyGeometryChange();
   }
 
-  void requestViewportRender(const Vec4& color, const Vec4& flash, const Vec4& tone, const bool scanned, const Vec4 rbg, const Vec4 rbg2, const float cubic) {
-    // do nothing
+  void requestViewportRender(const Vec4&c, const Vec4&f, const Vec4&t, const bool s, const Vec4 rx, const Vec4 ry, const float cubic) {
+    const IntRect &viewpRect = glState.scissorBox.get();
+    const IntRect &screenRect = geometry.rect;
+
+    const bool toneRGBEffect = t.xyzNotNull();
+    const bool toneGrayEffect = t.w != 0;
+    const bool colorEffect = c.w > 0;
+    const bool flashEffect = f.w > 0;
+    const bool cubicEffect = cubic != 0;
+    const bool rgbOffset = rx.xyzNotNull() || ry.xyzNotNull();
+    const bool scannedEffect = s;
+            
+    if (toneGrayEffect) {
+        pp.swapRender();
+        
+        if (!viewpRect.encloses(screenRect)) {
+            /* Scissor test _does_ affect FBO blit operations,
+             * and since we're inside the draw cycle, it will
+             * be turned on, so turn it off temporarily */
+            glState.scissorTest.pushSet(false);
+            
+            int scaleIsSpecial = GLMeta::blitScaleIsSpecial(pp.frontBuffer(), false, geometry.rect, pp.backBuffer(), geometry.rect);
+            GLMeta::blitBegin(pp.frontBuffer(), false, scaleIsSpecial);
+            GLMeta::blitSource(pp.backBuffer(), scaleIsSpecial);
+            GLMeta::blitRectangle(geometry.rect, Vec2i());
+            GLMeta::blitEnd();
+            
+            glState.scissorTest.pop();
+        }
+        
+        GrayShader &shader = shState->shaders().gray;
+        shader.bind();
+        shader.setGray(t.w);
+        shader.applyViewportProj();
+        shader.setTexSize(screenRect.size());
+        
+        TEX::bind(pp.backBuffer().tex);
+        
+        glState.blend.pushSet(false);
+        screenQuad.draw();
+        glState.blend.pop();
+    }
+
+    if (scannedEffect)
+    {
+      pp.swapRender();
+      if (!viewpRect.encloses(screenRect))
+      {
+        /* Scissor test _does_ affect FBO blit operations,
+         * and since we're inside the draw cycle, it will
+         * be turned on, so turn it off temporarily */
+        glState.scissorTest.pushSet(false);
+        GLMeta::blitBegin(pp.frontBuffer());
+        GLMeta::blitSource(pp.backBuffer());
+        GLMeta::blitRectangle(geometry.rect, Vec2i());
+        GLMeta::blitEnd();
+        glState.scissorTest.pop();
+      }
+      ScannedShader &shader = shState->shaders().scanned;
+      shader.bind();
+      shader.applyViewportProj();
+      shader.setTexSize(screenRect.size());
+      TEX::bind(pp.backBuffer().tex);
+      glState.blend.pushSet(false);
+      screenQuad.draw();
+      glState.blend.pop();
+    }
+
+    if (cubicEffect)
+    {
+      pp.swapRender();
+      if (!viewpRect.encloses(screenRect))
+      {
+        /* Scissor test _does_ affect FBO blit operations,
+         * and since we're inside the draw cycle, it will
+         * be turned on, so turn it off temporarily */
+        glState.scissorTest.pushSet(false);
+        GLMeta::blitBegin(pp.frontBuffer());
+        GLMeta::blitSource(pp.backBuffer());
+        GLMeta::blitRectangle(geometry.rect, Vec2i());
+        GLMeta::blitEnd();
+        glState.scissorTest.pop();
+      }
+      CubicShader &shader = shState->shaders().cubic;
+      shader.bind();
+      shader.setiTime(cubic);
+      shader.applyViewportProj();
+      shader.setTexSize(screenRect.size());
+      TEX::bind(pp.backBuffer().tex);
+      glState.blend.pushSet(false);
+      screenQuad.draw();
+      glState.blend.pop();
+    }
+    if (rgbOffset)
+    {
+      pp.swapRender();
+      if (!viewpRect.encloses(screenRect))
+      {
+        /* Scissor test _does_ affect FBO blit operations,
+         * and since we're inside the draw cycle, it will
+         * be turned on, so turn it off temporarily */
+        glState.scissorTest.pushSet(false);
+        GLMeta::blitBegin(pp.frontBuffer());
+        GLMeta::blitSource(pp.backBuffer());
+        GLMeta::blitRectangle(geometry.rect, Vec2i());
+        GLMeta::blitEnd();
+        glState.scissorTest.pop();
+      }
+      ChronosShader &shader = shState->shaders().chronos;
+      shader.bind();
+      shader.setrgbOffset(rx, ry);
+      shader.applyViewportProj();
+      shader.setTexSize(screenRect.size());
+      TEX::bind(pp.backBuffer().tex);
+      glState.blend.pushSet(false);
+      screenQuad.draw();
+      glState.blend.pop();
+    }
+
+    if (!toneRGBEffect && !colorEffect && !flashEffect)
+        return;
+
+    FlatColorShader &shader = shState->shaders().flatColor;
+    shader.bind();
+    shader.applyViewportProj();
+            
+    if (toneRGBEffect) {
+        /* First split up additive / substractive components */
+        Vec4 add, sub;
+        
+        if (t.x > 0)
+            add.x = t.x;
+        if (t.y > 0)
+            add.y = t.y;
+        if (t.z > 0)
+            add.z = t.z;
+          
+        if (t.x < 0)
+            sub.x = -t.x;
+        if (t.y < 0)
+            sub.y = -t.y;
+        if (t.z < 0)
+            sub.z = -t.z;
+          
+        /* Then apply them using hardware blending */
+        gl.BlendFuncSeparate(GL_ONE, GL_ONE, GL_ZERO, GL_ONE);
+        
+        if (add.xyzNotNull()) {
+            gl.BlendEquation(GL_FUNC_ADD);
+            shader.setColor(add);
+            
+            screenQuad.draw();
+        }
+        
+        if (sub.xyzNotNull()) {
+            gl.BlendEquation(GL_FUNC_REVERSE_SUBTRACT);
+            shader.setColor(sub);
+            
+            screenQuad.draw();
+        }
+    }
+
+    if (colorEffect || flashEffect) {
+        gl.BlendEquation(GL_FUNC_ADD);
+        gl.BlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ZERO,
+                             GL_ONE);
+    }
+
+    if (colorEffect) {
+        shader.setColor(c);
+        screenQuad.draw();
+    }
+
+    if (flashEffect) {
+        shader.setColor(f);
+        screenQuad.draw();
+    }
+
+    glState.blendMode.refresh();
   }
 };
 
@@ -142,7 +376,7 @@ RB_METHOD(screenWindowDraw) {
   int h = geo.rect.h;
 
   GLMeta::blitBeginScreen(Vec2i(w ,h), false);
-  GLMeta::blitSource(window->scene.tex, 0);
+  GLMeta::blitSource(window->scene.pp.frontBuffer(), 0);
 
   gl.ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   FBO::clear();
@@ -152,6 +386,8 @@ RB_METHOD(screenWindowDraw) {
   GLMeta::blitEnd();
 
   SDL_GL_SwapWindow(window->window); 
+
+  GFX_UNLOCK;
 
   GFX_UNLOCK;
 
