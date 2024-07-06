@@ -290,6 +290,7 @@ struct MonitorWindow {
     EventThread::CreateWindowArgs args = {x, y, w, h, flags, name};
     window = shState->eThread().requestNewWindow(&args);
     shState->monitorWindows.insert(this);
+    render();
   }
   ~MonitorWindow() {
     shState->monitorWindows.erase(this);
@@ -297,21 +298,17 @@ struct MonitorWindow {
   }
 
   // renders to ping pong buffer
-  void renderScene();
-  // present the ping pong buffer
-  void present();
+  void render();
   Scene* getScene();
 };
 // so we can use this from outside this file
 Scene* MonitorWindow::getScene() {
   return &scene;
 }
-void MonitorWindow::renderScene() {
-  scene.composite();
-}
-void MonitorWindow::present() {
+void MonitorWindow::render() {
   SDL_GLContext ctx = shState->graphics().context();
   SDL_GL_MakeCurrent(window, ctx);
+  scene.composite();
   auto geo = scene.getGeometry();
   int w = geo.rect.w;
   int h = geo.rect.h;
@@ -325,7 +322,6 @@ void MonitorWindow::present() {
   GLMeta::blitRectangle(IntRect(0, 0, w, h), IntRect(0,h,w,-h), false);
 
   GLMeta::blitEnd();
-
   SDL_GL_SwapWindow(window); 
 }
 
