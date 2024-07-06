@@ -439,6 +439,26 @@ RB_METHOD(monitorWindowSize) {
   return rb_ary_new_from_args(2, INT2NUM(w), INT2NUM(h));
 }
 
+RB_METHOD(monitorWindowShow) {
+  MonitorWindow* window = getPrivateData<MonitorWindow>(self);
+
+  GUARD_DISPOSED(window);
+
+  SDL_ShowWindow(window->window);
+
+  return Qnil;
+}
+
+RB_METHOD(monitorWindowHide) {
+  MonitorWindow* window = getPrivateData<MonitorWindow>(self);
+
+  GUARD_DISPOSED(window);
+
+  SDL_HideWindow(window->window);
+
+  return Qnil;
+}
+
 void osfmBindingInit() {
 
   VALUE klass = rb_define_class("MonitorWindow", rb_cObject);
@@ -450,6 +470,8 @@ void osfmBindingInit() {
   _rb_define_method(klass, "resize", monitorWindowResize);
   _rb_define_method(klass, "move_to", monitorWindowMove);
   _rb_define_method(klass, "position", monitorWindowPos);
+  _rb_define_method(klass, "show", monitorWindowShow);
+  _rb_define_method(klass, "hide", monitorWindowHide);
 
   rb_define_const(klass, "UNDEFINED_POS", INT2NUM(SDL_WINDOWPOS_UNDEFINED));
   rb_define_const(klass, "CENTERED_POS", INT2NUM(SDL_WINDOWPOS_CENTERED));
