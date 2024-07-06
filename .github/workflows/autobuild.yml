@@ -64,12 +64,13 @@ jobs:
       - name: Prepare archive
         shell: msys2 {0}
         run: |
+          mkdir build/out
           mkdir build/out/lib
-          cd build/out/lib
-          cp /ucrt64/bin/zlib1.dll .
+          cd build/out/
+          cp /ucrt64/bin/zlib1.dll ./lib
           cp ../../../windows/build-ucrt64/bin/x64-ucrt-ruby310.dll .
           cp -r ../../../windows/build-ucrt64/lib/ruby/3.1.0 .
-          mv ./3.1.0 ./ruby
+          mv ./3.1.0 ./lib/ruby
           cp ../../oneshot.exe ./lib
           cp ../../oneshot-shim.exe ./oneshot
           cp ../../journal/_______.exe .
