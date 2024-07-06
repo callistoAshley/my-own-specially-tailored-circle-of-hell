@@ -72,7 +72,7 @@ jobs:
           cp -r ../../windows/build-ucrt64/lib/ruby/3.1.0 .
           mv ./3.1.0 ./lib/ruby
           cp ../oneshot.exe ./lib
-          cp ../oneshot-shim.exe ./oneshot
+          cp ../oneshot-shim.exe ./oneshot.exe
           cp ../journal/_______.exe .
           cp ../../mkxp.json .
           cp ../../assets/LICENSE.mkxp-z-with-https.txt .
