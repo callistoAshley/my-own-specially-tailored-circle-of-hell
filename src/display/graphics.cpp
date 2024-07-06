@@ -79,7 +79,8 @@
 #define AUDIO_BUFFER_LEN_MS 2000
 
 struct MonitorWindow {
-    void draw();
+    void renderScene();
+    void present();
 };
 
 typedef struct AudioQueue
@@ -1185,6 +1186,9 @@ struct GraphicsPrivate {
             shState->oneshot().obscuredDirty = false;
         }
         screen.composite();
+        for (auto window : shState->monitorWindows) {
+            window->renderScene(); // renders to an offscreen fbo so we dont need to switch contexts
+        }
         
         // maybe unspaghetti this later
         if (integerScaleStepApplicable() && !integerLastMileScaling)
@@ -1248,8 +1252,11 @@ struct GraphicsPrivate {
         
         GLMeta::blitEnd();
         
+        // perform presents here to avoid constant context switching
         swapGLBuffer();
-        
+        for (auto window : shState->monitorWindows) {
+            window->present();
+        }
         updateAvgFPS();
     }
     
@@ -1370,10 +1377,6 @@ void Graphics::update(bool checkForShutdown) {
     
     p->checkResize();
     p->redrawScreen();
-
-    for (auto window : shState->monitorWindows) {
-        window->draw();
-    }
 }
 
 void Graphics::freeze() {

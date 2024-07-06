@@ -1,5 +1,6 @@
 #include <SDL2/SDL.h>
 #include "etc-internal.h"
+#include "eventthread.h"
 #include "gl-fun.h"
 #include "gl-util.h"
 #include "gl-meta.h"
@@ -286,31 +287,31 @@ struct MonitorWindow {
   WindowScene scene;
 
   MonitorWindow(int x, int y, int w, int h, unsigned int flags, const char* name) : scene(w, h) {
-    window = SDL_CreateWindow(name, x, y, w, h, flags);
+    EventThread::CreateWindowArgs args = {x, y, w, h, flags, name};
+    window = shState->eThread().requestNewWindow(&args);
     shState->monitorWindows.insert(this);
   }
   ~MonitorWindow() {
     shState->monitorWindows.erase(this);
-    if (window)
-      SDL_DestroyWindow(window);
+    shState->eThread().destroySDLWindow(window); // do it on the event thread
   }
 
-  void draw();
+  // renders to ping pong buffer
+  void renderScene();
+  // present the ping pong buffer
+  void present();
   Scene* getScene();
 };
 // so we can use this from outside this file
 Scene* MonitorWindow::getScene() {
   return &scene;
 }
-void MonitorWindow::draw() {
-  SDL_GLContext ctx = shState->graphics().context();
-  int err = SDL_GL_MakeCurrent(window, ctx);
-  if (err != 0) {
-    GFX_UNLOCK;
-    rb_raise(rb_eRuntimeError, "Failed to make window current: %s", SDL_GetError());
-  }
-
+void MonitorWindow::renderScene() {
   scene.composite();
+}
+void MonitorWindow::present() {
+  SDL_GLContext ctx = shState->graphics().context();
+  SDL_GL_MakeCurrent(window, ctx);
   auto geo = scene.getGeometry();
   int w = geo.rect.w;
   int h = geo.rect.h;

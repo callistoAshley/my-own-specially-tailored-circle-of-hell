@@ -32,6 +32,7 @@
 
 #include <stdint.h>
 
+#include "SDL_video.h"
 #include "config.h"
 #include "etc-internal.h"
 #include "sdl-util.h"
@@ -98,6 +99,11 @@ public:
     void requestWindowCenter();
     void requestWindowRename(const char *title);
 	void requestShowCursor(bool mode);
+
+	struct CreateWindowArgs { int x; int y; int w; int h; unsigned int flags; const char* name; };
+	// get random freezes without doing this on the event thread
+	SDL_Window* requestNewWindow(const CreateWindowArgs *args);
+	void destroySDLWindow(SDL_Window *window);
     
     void requestTextInputMode(bool mode);
     

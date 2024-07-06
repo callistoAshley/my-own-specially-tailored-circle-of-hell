@@ -20,6 +20,7 @@
  */
 
 #include "eventthread.h"
+#include "SDL_video.h"
 
 #include <SDL_events.h>
 #include <SDL_messagebox.h>
@@ -109,12 +110,15 @@ enum
     REQUEST_TEXTMODE,
     
     REQUEST_SETTINGS,
+    REQUEST_NEW_WINDOW,
+    REQUEST_DESTROY_WINDOW,
     
     UPDATE_FPS,
     UPDATE_SCREEN_RECT,
     
     EVENT_COUNT
 };
+volatile SDL_Window *new_window;
 
 static uint32_t usrIdStart;
 
@@ -594,6 +598,20 @@ void EventThread::process(RGSSThreadData &rtData)
                         openSettingsWindow();
 #endif
                         break;
+                    case REQUEST_NEW_WINDOW:
+                    {
+                        const CreateWindowArgs *args = static_cast<const CreateWindowArgs*>(event.user.data1);
+                        new_window = SDL_CreateWindow(args->name,
+                                                   args->x, args->y,
+                                                   args->w, args->h,
+                                                   args->flags);
+                        break;
+                    }
+                    case REQUEST_DESTROY_WINDOW:
+                    {
+                        SDL_DestroyWindow(static_cast<SDL_Window*>(event.user.data1));
+                        break;
+                    }
                         
                     case UPDATE_FPS :
                         if (rtData.config.printFPS)
@@ -830,6 +848,25 @@ void EventThread::requestSettingsMenu()
 {
     SDL_Event event;
     event.type = usrIdStart + REQUEST_SETTINGS;
+    SDL_PushEvent(&event);
+}
+
+SDL_Window *EventThread::requestNewWindow(const CreateWindowArgs *args)
+{
+    SDL_Event event;
+    event.type = usrIdStart + REQUEST_NEW_WINDOW;
+    event.user.data1 = (void*)args;
+    new_window = nullptr; // reset 
+    SDL_PushEvent(&event);
+    while (!new_window)
+        SDL_Delay(1);
+    return (SDL_Window*) new_window;
+}
+void EventThread::destroySDLWindow(SDL_Window *window)
+{
+    SDL_Event event;
+    event.type = usrIdStart + REQUEST_DESTROY_WINDOW;
+    event.user.data1 = window;
     SDL_PushEvent(&event);
 }
 
