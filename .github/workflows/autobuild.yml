@@ -68,15 +68,14 @@ jobs:
           mkdir build/out/lib
           cd build/out/
           cp /ucrt64/bin/zlib1.dll ./lib
-          cp ../../../windows/build-ucrt64/bin/x64-ucrt-ruby310.dll .
-          cp -r ../../../windows/build-ucrt64/lib/ruby/3.1.0 .
+          cp ../../windows/build-ucrt64/bin/x64-ucrt-ruby310.dll .
+          cp -r ../../windows/build-ucrt64/lib/ruby/3.1.0 .
           mv ./3.1.0 ./lib/ruby
-          cp ../../oneshot.exe ./lib
-          cp ../../oneshot-shim.exe ./oneshot
-          cp ../../journal/_______.exe .
-          cp ../../../mkxp.json .
-          cp -r ../../../scripts .
-          cp ../../../assets/LICENSE.mkxp-z-with-https.txt .
+          cp ../oneshot.exe ./lib
+          cp ../oneshot-shim.exe ./oneshot
+          cp ../journal/_______.exe .
+          cp ../../mkxp.json .
+          cp ../../assets/LICENSE.mkxp-z-with-https.txt .
 
       - uses: actions/upload-artifact@v3
         with:
