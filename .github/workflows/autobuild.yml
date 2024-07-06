@@ -64,29 +64,24 @@ jobs:
       - name: Prepare archive
         shell: msys2 {0}
         run: |
-          mkdir build/lib
-          cd build/lib
+          mkdir build/out/lib
+          cd build/out/lib
           cp /ucrt64/bin/zlib1.dll .
-          cp ../../windows/build-ucrt64/bin/x64-ucrt-ruby310.dll .
-          cp -r ../../windows/build-ucrt64/lib/ruby/3.1.0 .
+          cp ../../../windows/build-ucrt64/bin/x64-ucrt-ruby310.dll .
+          cp -r ../../../windows/build-ucrt64/lib/ruby/3.1.0 .
           mv ./3.1.0 ./ruby
-          cp ../oneshot.exe ./lib
-          cp ../oneshot-shim.exe ./oneshot
-          cp ../journal/_______.exe .
-          cp ../../mkxp.json .
-          cp -r ../../scripts .
-          cp ../../assets/LICENSE.mkxp-z-with-https.txt .
+          cp ../../oneshot.exe ./lib
+          cp ../../oneshot-shim.exe ./oneshot
+          cp ../../journal/_______.exe .
+          cp ../../../mkxp.json .
+          cp -r ../../../scripts .
+          cp ../../../assets/LICENSE.mkxp-z-with-https.txt .
 
       - uses: actions/upload-artifact@v3
         with:
           name: mkxp-z.windows.${{github.event_name == 'pull_request' && format('PR{0}', github.event.number) || github.ref_name}}-${{steps.short-sha.outputs.sha}}
           path: |
-            build/lib/*.dll
-            build/lib/*.exe
-            build/lib/mkxp.json
-            build/lib/LICENSE.mkxp-z-with-https.txt
-            build/lib/scripts/
-            build/lib/ruby/
+            build/out
 
   build-linux-native:
     name: Ubuntu 22.04 x86_64
