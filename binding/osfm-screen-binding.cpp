@@ -79,10 +79,6 @@ public:
   }
 
   void composite() {
-    // would rather not call this but we get segfaults otherwise
-    // probably not too prohibitive to call this every frame, most things have a dirty flag
-    shState->prepareDraw();
-
     glState.viewport.set(IntRect(0, 0, geometry.rect.w, geometry.rect.h));
 
     pp.startRender();
@@ -289,22 +285,50 @@ struct MonitorWindow {
   SDL_Window* window;
   WindowScene scene;
 
-  MonitorWindow(int x, int y, int w, int h, unsigned int flags) : scene(w, h) {
-    window = SDL_CreateWindow("Test", x, y, w, h, flags);
+  MonitorWindow(int x, int y, int w, int h, unsigned int flags, const char* name) : scene(w, h) {
+    window = SDL_CreateWindow(name, x, y, w, h, flags);
+    shState->monitorWindows.insert(this);
   }
   ~MonitorWindow() {
+    shState->monitorWindows.erase(this);
     if (window)
       SDL_DestroyWindow(window);
   }
 
+  void draw();
   Scene* getScene();
 };
 // so we can use this from outside this file
 Scene* MonitorWindow::getScene() {
   return &scene;
 }
+void MonitorWindow::draw() {
+  SDL_GLContext ctx = shState->graphics().context();
+  int err = SDL_GL_MakeCurrent(window, ctx);
+  if (err != 0) {
+    GFX_UNLOCK;
+    rb_raise(rb_eRuntimeError, "Failed to make window current: %s", SDL_GetError());
+  }
 
-DEF_TYPE_CUSTOMNAME(MonitorWindow, "MonitorWindow");
+  scene.composite();
+  auto geo = scene.getGeometry();
+  int w = geo.rect.w;
+  int h = geo.rect.h;
+
+  GLMeta::blitBeginScreen(Vec2i(w ,h), false);
+  GLMeta::blitSource(scene.pp.frontBuffer(), 0);
+
+  gl.ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+  FBO::clear();
+
+  GLMeta::blitRectangle(IntRect(0, 0, w, h), IntRect(0,h,w,-h), false);
+
+  GLMeta::blitEnd();
+
+  SDL_GL_SwapWindow(window); 
+}
+
+DEF_TYPE(MonitorWindow);
 
 #define GUARD_DISPOSED(w) if (!w->window) rb_raise(rb_eRuntimeError, "Window already disposed!");
 
@@ -318,29 +342,39 @@ RB_METHOD(monitorWindowInit) {
   int w = NUM2INT(vw);
   int h = NUM2INT(vh);
 
+  const char* name = " ";
   unsigned int flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SKIP_TASKBAR | SDL_WINDOW_BORDERLESS | SDL_WINDOW_TRANSPARENT;
   if (!NIL_P(kwargs)) {
-    ID table[4] = {
+    ID table[7] = {
       rb_intern("borderless"),
       rb_intern("hidden"),
       rb_intern("always_on_top"),
-      rb_intern("fullscreen")
+      rb_intern("fullscreen"),
+      rb_intern("skip_taskbar"),
+      rb_intern("transparent"),
+      rb_intern("name"),
     };
-    VALUE values[4];
+    VALUE values[7];
 
-    rb_get_kwargs(kwargs, table, 0, 4, values);
+    rb_get_kwargs(kwargs, table, 0, 7, values);
 
-    if (!RTEST(values[0]))
-      flags ^= SDL_WINDOW_BORDERLESS; // enabled by default
-    if (RTEST(values[1]))
+    if (!RTEST(values[0]) && values[0] != Qundef)
+      flags &= ~SDL_WINDOW_BORDERLESS; // enabled by default
+    if (RTEST(values[1]) && values[1] != Qundef)
       flags |= SDL_WINDOW_HIDDEN; // shown by default
-    if (RTEST(values[2]))
+    if (RTEST(values[2]) && values[2] != Qundef)
       flags |= SDL_WINDOW_ALWAYS_ON_TOP; // not always on top by default
-    if (RTEST(values[3]))
+    if (RTEST(values[3]) && values[3] != Qundef)
       flags |= SDL_WINDOW_FULLSCREEN; // not fullscreen by default
+    if (!RTEST(values[4]) && values[4] != Qundef)
+      flags &= ~SDL_WINDOW_SKIP_TASKBAR; // skipped by default
+    if (!RTEST(values[5]) && values[5] != Qundef)
+      flags &= ~SDL_WINDOW_TRANSPARENT; // not transparent by default
+    if (values[6] != Qundef)
+      name = StringValueCStr(values[6]);
   }
 
-  MonitorWindow* window = new MonitorWindow(x, y, w, h, flags);
+  MonitorWindow* window = new MonitorWindow(x, y, w, h, flags, name);
 
   setPrivateData(self, window);
 
@@ -352,44 +386,6 @@ RB_METHOD(monitorWindowDispose) {
 
   delete w;
   setPrivateData(self, nullptr);
-
-  return Qnil;
-}
-
-RB_METHOD(monitorWindowDraw) {
-  MonitorWindow* window = getPrivateData<MonitorWindow>(self);
-
-  GFX_LOCK;
-
-  GUARD_DISPOSED(window);
-
-  SDL_GLContext ctx = shState->graphics().context();
-  int err = SDL_GL_MakeCurrent(window->window, ctx);
-  if (err != 0) {
-    GFX_UNLOCK;
-    rb_raise(rb_eRuntimeError, "Failed to make window current: %s", SDL_GetError());
-  }
-
-  window->scene.composite();
-  auto geo = window->scene.getGeometry();
-  int w = geo.rect.w;
-  int h = geo.rect.h;
-
-  GLMeta::blitBeginScreen(Vec2i(w ,h), false);
-  GLMeta::blitSource(window->scene.pp.frontBuffer(), 0);
-
-  gl.ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-  FBO::clear();
-
-  GLMeta::blitRectangle(IntRect(0, 0, w, h), IntRect(0,h,w,-h), false);
-
-  GLMeta::blitEnd();
-
-  SDL_GL_SwapWindow(window->window); 
-
-  GFX_UNLOCK;
-
-  GFX_UNLOCK;
 
   return Qnil;
 }
@@ -424,6 +420,28 @@ RB_METHOD(monitorWindowMove) {
   return Qnil;
 }
 
+RB_METHOD(monitorWindowPos) {
+  MonitorWindow* window = getPrivateData<MonitorWindow>(self);
+
+  GUARD_DISPOSED(window);
+
+  int x, y;
+  SDL_GetWindowPosition(window->window, &x, &y);
+
+  return rb_ary_new_from_args(2, INT2NUM(x), INT2NUM(y));
+}
+
+RB_METHOD(monitorWindowSize) {
+  MonitorWindow* window = getPrivateData<MonitorWindow>(self);
+
+  GUARD_DISPOSED(window);
+
+  int w, h;
+  SDL_GetWindowSize(window->window, &w, &h);
+
+  return rb_ary_new_from_args(2, INT2NUM(w), INT2NUM(h));
+}
+
 void osfmBindingInit() {
 
   VALUE klass = rb_define_class("MonitorWindow", rb_cObject);
@@ -431,9 +449,10 @@ void osfmBindingInit() {
 
   _rb_define_method(klass, "initialize", monitorWindowInit);
   _rb_define_method(klass, "dispose", monitorWindowDispose);
-  _rb_define_method(klass, "draw", monitorWindowDraw);
+  _rb_define_method(klass, "size", monitorWindowSize);
   _rb_define_method(klass, "resize", monitorWindowResize);
-  _rb_define_method(klass, "move", monitorWindowMove);
+  _rb_define_method(klass, "move_to", monitorWindowMove);
+  _rb_define_method(klass, "position", monitorWindowPos);
 
   rb_define_const(klass, "UNDEFINED_POS", INT2NUM(SDL_WINDOWPOS_UNDEFINED));
   rb_define_const(klass, "CENTERED_POS", INT2NUM(SDL_WINDOWPOS_CENTERED));

@@ -22,6 +22,7 @@
 #ifndef SHAREDSTATE_H
 #define SHAREDSTATE_H
 
+#include <set>
 #include "oneshot.h"
 #include "sigslot/signal.hpp"
 
@@ -57,6 +58,8 @@ struct SharedMidiState;
 #endif
 
 class Oneshot;
+
+struct MonitorWindow;
 
 struct SharedState
 {
@@ -95,6 +98,7 @@ struct SharedState
 #endif
 
 	sigslot::signal<> prepareDraw;
+	std::set<MonitorWindow *> monitorWindows;
 
 	unsigned int genTimeStamp();
     

@@ -78,6 +78,10 @@
 #define MOVIE_AUDIO_BUFFER_SIZE 2048
 #define AUDIO_BUFFER_LEN_MS 2000
 
+struct MonitorWindow {
+    void draw();
+};
+
 typedef struct AudioQueue
 {
     const THEORAPLAY_AudioPacket *audio;
@@ -1366,6 +1370,10 @@ void Graphics::update(bool checkForShutdown) {
     
     p->checkResize();
     p->redrawScreen();
+
+    for (auto window : shState->monitorWindows) {
+        window->draw();
+    }
 }
 
 void Graphics::freeze() {
