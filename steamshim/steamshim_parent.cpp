@@ -241,6 +241,9 @@ static int closeProcess(ProcessType *pid) {
 } // closeProcess
 
 int main(int argc, char **argv) {
+  // set the __GL_SYNC_TO_VBLANK environment variable to 0 to disable vsync (very hacky)
+  setenv("__GL_SYNC_TO_VBLANK", "0", 1);
+
   signal(SIGPIPE, SIG_IGN);
   GArgc = argc;
   GArgv = argv;
