@@ -209,6 +209,9 @@ int server_thread(void *data) {
 
 int render_thread(void* data) {
   Ctx *ctx = (Ctx *)data;
+  ctx->renderer = SDL_CreateRenderer(ctx->window, NULL, SDL_RENDERER_SOFTWARE);
+
+  ctx->texture = SDL_CreateTextureFromSurface(ctx->renderer, ctx->surface);
 
   // I would move this into one line but apparently that leaves things uninitialized???
   // C++ what the fuck
@@ -275,10 +278,6 @@ void journal_handling(const stbi_uc* initial_image_buf, size_t initial_image_buf
 
   ctx.window =
       SDL_CreateWindow(" ", w, h, SDL_WINDOW_TRANSPARENT | SDL_WINDOW_HIDDEN);
-
-  ctx.renderer = SDL_CreateRenderer(ctx.window, NULL, SDL_RENDERER_SOFTWARE);
-
-  ctx.texture = SDL_CreateTextureFromSurface(ctx.renderer, ctx.surface);
 
   SDL_SetWindowHitTest(ctx.window, hit_test_fun, ctx.surface);
 
