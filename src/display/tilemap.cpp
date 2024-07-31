@@ -744,8 +744,17 @@ struct TilemapPrivate
 
 	void handleTile(int x, int y, int z)
 	{
-		int tileInd =
-			tableGetWrapped(*mapData, x + viewpPos.x, y + viewpPos.y, z);
+		int ox = x + viewpPos.x;
+		int oy = y + viewpPos.y;
+
+		bool in_bounds = ox >= 0 && oy >= 0 && ox < mapData->xSize() && oy < mapData->ySize();
+		bool should_return = !(wrapping || in_bounds);
+		if (should_return)
+			return;
+
+		int tileInd = tableGetWrapped(*mapData, ox, oy, z);
+		// int tileInd =
+		// 	tableGetWrapped(*mapData, x + viewpPos.x, y + viewpPos.y, z);
 
 		/* Check for empty space */
 		if (tileInd < 48)
@@ -806,30 +815,35 @@ struct TilemapPrivate
 	{
 		clearQuadArrays();
 
-		int ox = viewpPos.x;
-		int oy = viewpPos.y;
-		int mapW = mapData->xSize();
-		int mapH = mapData->ySize();
+		// int ox = viewpPos.x;
+		// int oy = viewpPos.y;
+		// int mapW = mapData->xSize();
+		// int mapH = mapData->ySize();
 
-		int minX = 0;
-		int minY = 0;
-		if (ox < 0)
-			minX = -ox;
-		if (oy < 0)
-			minY = -oy;
+		// int minX = 0;
+		// int minY = 0;
+		// if (ox < 0)
+		// 	minX = -ox;
+		// if (oy < 0)
+		// 	minY = -oy;
 
-		// There could be off-by-one issues in these couple sections.
-		int maxX = viewpW;
-		int maxY = viewpH;
-		if (ox + maxX >= mapW)
-			maxX = mapW - ox - 1;
-		if (oy + maxY >= mapH)
-			maxY = mapH - oy - 1;
+		// // There could be off-by-one issues in these couple sections.
+		// int maxX = viewpW;
+		// int maxY = viewpH;
+		// if (ox + maxX >= mapW)
+		// 	maxX = mapW - ox - 1;
+		// if (oy + maxY >= mapH)
+		// 	maxY = mapH - oy - 1;
 
-		if ((minX > maxX) || (minY > maxY))
-			return;
-		for (int x = minX; x <= maxX; ++x)
-			for (int y = minY; y <= maxY; ++y)
+		// if ((minX > maxX) || (minY > maxY))
+		// 	return;
+		// for (int x = minX; x <= maxX; ++x)
+		// 	for (int y = minY; y <= maxY; ++y)
+		// 		for (int z = 0; z < mapData->zSize(); ++z)
+		// 			handleTile(x, y, z);
+
+		for (int x = 0; x < viewpW; ++x)
+			for (int y = 0; y < viewpH; ++y)
 				for (int z = 0; z < mapData->zSize(); ++z)
 					handleTile(x, y, z);
 	}

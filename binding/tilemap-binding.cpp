@@ -151,7 +151,7 @@ DEF_GFX_PROP_OBJ_VAL(Tilemap, Color, Color, "color")
 DEF_GFX_PROP_OBJ_VAL(Tilemap, Tone, Tone, "tone")
 
 DEF_GFX_PROP_B(Tilemap, Visible)
-DEF_PROP_B(Tilemap, Wrapping)
+DEF_GFX_PROP_B(Tilemap, Wrapping)
 
 DEF_GFX_PROP_I(Tilemap, OX)
 DEF_GFX_PROP_I(Tilemap, OY)
