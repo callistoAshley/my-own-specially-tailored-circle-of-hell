@@ -349,8 +349,11 @@ $(DOWNLOADS)/sdl3/cmakebuild/Makefile: $(DOWNLOADS)/sdl3/CMakeLists.txt
 	cd $(DOWNLOADS)/sdl3; mkdir -p cmakebuild; cd cmakebuild; \
 	$(CMAKE) -DSDL_STATIC=1 -DSDL_SHARED=0
 
+# need to clone at a specific commit (the sdl3 repo keeps removing the sdl3 tags??)
 $(DOWNLOADS)/sdl3/CMakeLists.txt:
-	$(CLONE) --branch prerelease-3.1.1 $(GITHUB)/libsdl-org/SDL $(DOWNLOADS)/sdl3
+	$(CLONE) --no-checkout $(GITHUB)/libsdl-org/SDL $(DOWNLOADS)/sdl3
+# Commit made Aug 14 2024
+	cd $(DOWNLOADS)/sdl3; git checkout d60e6e25581731f5f0dddd46b45132ba991ff1d6
 
 libzmq: init_dirs $(LIBDIR)/libzmq.a
 

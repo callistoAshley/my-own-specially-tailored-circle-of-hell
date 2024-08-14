@@ -4,11 +4,11 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+#include <cassert>
 #include <cstdio>
 #include <cstdlib>
-#include <string>
-#include <cassert>
 #include <iostream>
+#include <string>
 
 #include <SDL3/SDL.h>
 
@@ -26,13 +26,13 @@
 #endif
 
 std::string fake_save_path() {
-  #ifdef __linux__
+#ifdef __linux__
   std::string path = xdg_user_dir_lookup("DOCUMENTS");
-  #endif
-  #ifdef __WIN32
-   std::string path = getenv("USERPROFILE");
-   path += "/Documents/My Games";
-  #endif
+#endif
+#ifdef __WIN32
+  std::string path = getenv("USERPROFILE");
+  path += "/Documents/My Games";
+#endif
   path += "/Oneshot/save_progress.oneshot";
   return path;
 }
@@ -50,7 +50,8 @@ SDL_HitTestResult hit_test_fun(SDL_Window *window, const SDL_Point *point,
     return SDL_HITTEST_NORMAL;
 }
 
-void journal_handling(const stbi_uc* initial_image_buf, size_t initial_image_buf_len);
+void journal_handling(const stbi_uc *initial_image_buf,
+                      size_t initial_image_buf_len);
 void niko_handling(int x, int y);
 
 int main(int argc, char **argv) {
@@ -59,7 +60,7 @@ int main(int argc, char **argv) {
     int y = atoi(argv[2]);
     niko_handling(x, y);
   } else {
-    const stbi_uc* initial_image_buf = ___journal_clover_png;
+    const stbi_uc *initial_image_buf = ___journal_clover_png;
     size_t initial_image_buf_len = ___journal_clover_png_len;
 
     std::string save_path = fake_save_path();
@@ -72,11 +73,12 @@ int main(int argc, char **argv) {
       std::string save_image_path(pathlen, '\0');
       fread(save_image_path.data(), 1, pathlen, file);
       fclose(file);
-      
+
       file = fopen(save_image_path.c_str(), "rb");
-      
+
       if (!file) {
-        std::cerr << "loading save image failed: " << save_image_path << std::endl;
+        std::cerr << "loading save image failed: " << save_image_path
+                  << std::endl;
 
         return 1;
       }
@@ -93,7 +95,7 @@ int main(int argc, char **argv) {
     journal_handling(initial_image_buf, initial_image_buf_len);
 
     if (initial_image_buf != ___journal_clover_png)
-      free((void *) initial_image_buf);
+      free((void *)initial_image_buf);
   }
 }
 
@@ -189,8 +191,8 @@ int server_thread(void *data) {
       int w, h, comp;
       ctx->pixels = stbi_load_from_file(file, &w, &h, &comp, 4);
 
-      ctx->surface = SDL_CreateSurfaceFrom(ctx->pixels, w, h, w * 4,
-                                           SDL_PIXELFORMAT_ABGR8888);
+      ctx->surface = SDL_CreateSurfaceFrom(w, h, SDL_PIXELFORMAT_ABGR8888,
+                                           ctx->pixels, w * 4);
       ctx->texture = SDL_CreateTextureFromSurface(ctx->renderer, ctx->surface);
 
       SDL_SetWindowSize(ctx->window, w, h);
@@ -207,14 +209,14 @@ int server_thread(void *data) {
   return 0;
 }
 
-int render_thread(void* data) {
+int render_thread(void *data) {
   Ctx *ctx = (Ctx *)data;
-  ctx->renderer = SDL_CreateRenderer(ctx->window, NULL, SDL_RENDERER_SOFTWARE);
+  ctx->renderer = SDL_CreateRenderer(ctx->window, NULL);
 
   ctx->texture = SDL_CreateTextureFromSurface(ctx->renderer, ctx->surface);
 
-  // I would move this into one line but apparently that leaves things uninitialized???
-  // C++ what the fuck
+  // I would move this into one line but apparently that leaves things
+  // uninitialized??? C++ what the fuck
   int old_window_x = INT32_MAX;
   int old_window_y = INT32_MAX;
   int window_x = 0;
@@ -230,7 +232,7 @@ int render_thread(void* data) {
 
       Message message;
       message.tag = Message::WindowPosition;
-      message.val.pos = { window_x, window_y };
+      message.val.pos = {window_x, window_y};
       zmq::message_t zmq_message(&message, sizeof(Message));
       ctx->pub_socket.send(zmq_message, zmq::send_flags::dontwait);
     }
@@ -250,7 +252,8 @@ int render_thread(void* data) {
   return 0;
 }
 
-void journal_handling(const stbi_uc* initial_image_buf, size_t initial_image_buf_len) {
+void journal_handling(const stbi_uc *initial_image_buf,
+                      size_t initial_image_buf_len) {
   // FIXME error handling
   SDL_Init(SDL_INIT_VIDEO);
 
@@ -271,10 +274,10 @@ void journal_handling(const stbi_uc* initial_image_buf, size_t initial_image_buf
   ctx.pub_socket.send(zmq_message, zmq::send_flags::dontwait);
 
   int w, h, comp;
-  ctx.pixels = stbi_load_from_memory(
-      initial_image_buf, initial_image_buf_len, &w, &h, &comp, 4);
+  ctx.pixels = stbi_load_from_memory(initial_image_buf, initial_image_buf_len,
+                                     &w, &h, &comp, 4);
   ctx.surface =
-      SDL_CreateSurfaceFrom(ctx.pixels, w, h, w * 4, SDL_PIXELFORMAT_ABGR8888);
+      SDL_CreateSurfaceFrom(w, h, SDL_PIXELFORMAT_ABGR8888, ctx.pixels, w * 4);
 
   ctx.window =
       SDL_CreateWindow(" ", w, h, SDL_WINDOW_TRANSPARENT | SDL_WINDOW_HIDDEN);
@@ -326,15 +329,14 @@ void niko_handling(int x, int y) {
   SDL_DisplayID di = SDL_GetDisplayForWindow(window);
   SDL_GetDisplayUsableBounds(di, &screen_rect);
 
-  SDL_Surface *niko1_surf = SDL_CreateSurfaceFrom(niko1_pixels, w, h, w * 4,
-                                                  SDL_PIXELFORMAT_ABGR8888);
-  SDL_Surface *niko2_surf = SDL_CreateSurfaceFrom(niko2_pixels, w, h, w * 4,
-                                                  SDL_PIXELFORMAT_ABGR8888);
-  SDL_Surface *niko3_surf = SDL_CreateSurfaceFrom(niko3_pixels, w, h, w * 4,
-                                                  SDL_PIXELFORMAT_ABGR8888);
+  SDL_Surface *niko1_surf = SDL_CreateSurfaceFrom(
+      w, h, SDL_PIXELFORMAT_ABGR8888, niko1_pixels, w * 4);
+  SDL_Surface *niko2_surf = SDL_CreateSurfaceFrom(
+      w, h, SDL_PIXELFORMAT_ABGR8888, niko2_pixels, w * 4);
+  SDL_Surface *niko3_surf = SDL_CreateSurfaceFrom(
+      w, h, SDL_PIXELFORMAT_ABGR8888, niko3_pixels, w * 4);
 
-  SDL_Renderer *renderer =
-      SDL_CreateRenderer(window, NULL, SDL_RENDERER_SOFTWARE);
+  SDL_Renderer *renderer = SDL_CreateRenderer(window, NULL);
 
   SDL_Texture *niko1_tex = SDL_CreateTextureFromSurface(renderer, niko1_surf);
   SDL_Texture *niko2_tex = SDL_CreateTextureFromSurface(renderer, niko2_surf);
