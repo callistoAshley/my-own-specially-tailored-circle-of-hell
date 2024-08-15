@@ -39,10 +39,13 @@
 #include <ruby/thread.h>
 #endif
 
+#include "debugwriter.h"
+
 static void fileIntFreeInstance(void *inst) {
     SDL_IOStream *ops = static_cast<SDL_IOStream *>(inst);
     
-    SDL_CloseIO(ops);
+    if (ops) // if we aren't closed already
+        SDL_CloseIO(ops);
 }
 
 #if RAPI_FULL > 187
@@ -130,6 +133,7 @@ RB_METHOD(fileIntClose) {
     
     SDL_IOStream *ops = getPrivateData<SDL_IOStream>(self);
     SDL_CloseIO(ops);
+    setPrivateData(self, NULL); // mark as closed
     
     return Qnil;
 }
