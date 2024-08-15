@@ -19,6 +19,7 @@
  ** along with mkxp.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "SDL3/SDL_iostream.h"
 #include "src/config.h"
 
 #include "binding-util.h"
@@ -42,7 +43,6 @@ static void fileIntFreeInstance(void *inst) {
     SDL_IOStream *ops = static_cast<SDL_IOStream *>(inst);
     
     SDL_CloseIO(ops);
-    SDL_FreeRW(ops);
 }
 
 #if RAPI_FULL > 187
@@ -52,13 +52,11 @@ DEF_ALLOCFUNC_CUSTOMFREE(FileInt, fileIntFreeInstance);
 #endif
 
 static VALUE fileIntForPath(const char *path, bool rubyExc) {
-    SDL_IOStream *ops = SDL_AllocRW();
+    SDL_IOStream *ops;
     
     try {
-        shState->fileSystem().openReadRaw(*ops, path);
+        ops = shState->fileSystem().openReadRaw(path);
     } catch (const Exception &e) {
-        SDL_FreeRW(ops);
-        
         if (rubyExc)
             raiseRbExc(e);
         else
@@ -82,7 +80,7 @@ typedef struct {
 } fileIntReadCbArgs;
 
 void call_RWread_cb(fileIntReadCbArgs *args) {
-    SDL_ReadIO(args->ops, args->dst, 1, args->length);
+    SDL_ReadIO(args->ops, args->dst, args->length);
 }
 #endif
 
@@ -95,16 +93,16 @@ RB_METHOD(fileIntRead) {
     
     if (length == -1) {
         Sint64 cur = SDL_TellIO(ops);
-        Sint64 end = SDL_SeekIO(ops, 0, SEEK_END);
+        Sint64 end = SDL_SeekIO(ops, 0, SDL_IO_SEEK_END);
         
         // Sometimes SDL_SeekIO will fail for no reason
         // with encrypted archives, so let's just ask
         // for the size up front
         if (end < 0)
-            end = ops->size(ops);
+            end = SDL_GetIOSize(ops);
         
         length = end - cur;
-        SDL_SeekIO(ops, cur, SEEK_SET);
+        SDL_SeekIO(ops, cur, SDL_IO_SEEK_SET);
     }
     
     if (length == 0)
@@ -142,7 +140,7 @@ RB_METHOD(fileIntGetByte) {
     SDL_IOStream *ops = getPrivateData<SDL_IOStream>(self);
     
     unsigned char byte;
-    size_t result = SDL_ReadIO(ops, &byte, 1, 1);
+    size_t result = SDL_ReadIO(ops, &byte, 1);
     
     return (result == 1) ? rb_fix_new(byte) : Qnil;
 }
