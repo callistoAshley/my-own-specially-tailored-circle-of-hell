@@ -21,6 +21,7 @@
 
 #include "tileatlasvx.h"
 
+#include "SDL3/SDL_pixels.h"
 #include "tilemap-common.h"
 #include "bitmap.h"
 #include "table.h"
@@ -208,7 +209,7 @@ createShadowSet()
 	Uint32 rm, gm, bm, am;
 
 	SDL_GetMasksForPixelFormat(SDL_PIXELFORMAT_ABGR8888, &bpp, &rm, &gm, &bm, &am);
-	SDL_Surface *surf = SDL_CreateRGBSurface(0, 1*32, 16*32, bpp, rm, gm, bm, am);
+	SDL_Surface *surf = SDL_CreateSurface(1*32, 16*32, SDL_GetPixelFormatForMasks(bpp, rm, gm, bm, am));
 
 	std::vector<SDL_Rect> rects;
 	SDL_Rect rect = { 0, 0, 16, 16 };
@@ -295,9 +296,9 @@ void build(TEXFBO &tf, Bitmap *bitmaps[BM_COUNT])
 			SDL_GetMasksForPixelFormat(SDL_PIXELFORMAT_ABGR8888,
 			                           &bpp, &rMask, &gMask, &bMask, &aMask);
 			SDL_Surface *blitTemp =
-				SDL_CreateRGBSurface(0, destWidth, destHeight, bpp, rMask, gMask, bMask, aMask);
+				SDL_CreateSurface(destWidth, destHeight, SDL_GetPixelFormatForMasks(bpp, rMask, gMask, bMask, aMask));
 
-			SDL_BlitSurfaceScaled(shadow, &srcRect, blitTemp, 0);
+			SDL_BlitSurfaceScaled(shadow, &srcRect, blitTemp, 0, SDL_SCALEMODE_LINEAR);
 
 			TEX::bind(tf.selfHires->tex);
 			TEX::uploadSubImage(destX, destY,
