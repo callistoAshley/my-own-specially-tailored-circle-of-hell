@@ -29,7 +29,7 @@
 #include "debugwriter.h"
 #include "fluid-fun.h"
 
-#include <SDL3/SDL_rwops.h>
+#include <SDL3/SDL_iostream.h>
 
 #include <assert.h>
 #include <math.h>
@@ -622,12 +622,12 @@ struct MidiSource : ALDataSource, MidiReadHandler
 	      genDeltasCarry(0),
 	      curTrack(-1)
 	{
-		size_t dataLen = SDL_GetIOSize(&ops);
+		size_t dataLen = SDL_GetIOSize(ops);
 		std::vector<uint8_t> data(dataLen);
 
-		if (SDL_ReadIO(&ops, &data[0], 1, dataLen) < dataLen)
+		if (SDL_ReadIO(ops, &data[0], dataLen) < dataLen)
 		{
-			SDL_CloseIO(&ops);
+			SDL_CloseIO(ops);
 			throw Exception(Exception::MKXPError, "Reading midi data failed");
 		}
 
@@ -637,7 +637,7 @@ struct MidiSource : ALDataSource, MidiReadHandler
 		}
 		catch (const Exception &)
 		{
-			SDL_CloseIO(&ops);
+			SDL_CloseIO(ops);
 			throw;
 		}
 
