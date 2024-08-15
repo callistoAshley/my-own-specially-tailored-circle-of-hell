@@ -20,6 +20,7 @@
 */
 
 #include "gl-meta.h"
+#include "SDL3/SDL_pixels.h"
 #include "gl-fun.h"
 #include "sharedstate.h"
 #include "glstate.h"
@@ -49,9 +50,9 @@ void subRectImageUpload(GLint srcW, GLint srcX, GLint srcY,
 	}
 	else
 	{
-		SDL_PixelFormat *form = src->format;
-		SDL_Surface *tmp = SDL_CreateRGBSurface(0, dstW, dstH, form->BitsPerPixel,
-		                                        form->Rmask, form->Gmask, form->Bmask, form->Amask);
+		const SDL_PixelFormatDetails *form = SDL_GetPixelFormatDetails(src->format);
+		SDL_Surface *tmp = SDL_CreateSurface(dstW, dstH, SDL_GetPixelFormatForMasks(form->bits_per_pixel,
+		                                        form->Rmask, form->Gmask, form->Bmask, form->Amask));
 		SDL_Rect srcRect = { srcX, srcY, dstW, dstH };
 
 		SDL_BlitSurface(src, &srcRect, tmp, 0);
