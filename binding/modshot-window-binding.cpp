@@ -1,3 +1,4 @@
+#include "SDL3/SDL_video.h"
 #include "oneshot.h"
 #include "sharedstate.h"
 #include "binding-util.h"
@@ -72,6 +73,30 @@ RB_METHOD(SetWindowOpacity) {
 	return Qnil;
 }
 
+RB_METHOD(SetAlwaysOnTop) {
+	bool top;
+	rb_get_args(argc, argv, "b", &top);
+	SDL_SetWindowAlwaysOnTop(shState->rtData().window, top);
+	return Qnil;
+}
+
+RB_METHOD(FlashWindow) {
+	int state;
+	rb_get_args(argc, argv, "i", &state);
+
+	if (state < SDL_FLASH_CANCEL || state > SDL_FLASH_UNTIL_FOCUSED)
+		rb_raise(rb_eArgError, "Invalid flash state");
+
+	SDL_FlashWindow(shState->rtData().window, (SDL_FlashOperation) state);
+	return Qnil;
+}
+
+RB_METHOD(WindowRaise) {
+	RB_UNUSED_PARAM;
+	SDL_RaiseWindow(shState->rtData().window);
+	return Qnil;
+}
+
 void modshotwindowBindingInit()
 {
 	VALUE module = rb_define_module("ModWindow");
@@ -80,5 +105,8 @@ void modshotwindowBindingInit()
 	_rb_define_module_function(module, "SetTitle", SetTitle);
 	_rb_define_module_function(module, "SetIcon", SetIcon);
 	_rb_define_module_function(module, "setWindowOpacity", SetWindowOpacity);
+	_rb_define_module_function(module, "setAlwaysOnTop", SetAlwaysOnTop);
+	_rb_define_module_function(module, "flashWindow", FlashWindow);
+	_rb_define_module_function(module, "raiseWindow", WindowRaise);
 	//_rb_define_module_function(module, "setWindowChromaKey", SetTransparentColor);
 }

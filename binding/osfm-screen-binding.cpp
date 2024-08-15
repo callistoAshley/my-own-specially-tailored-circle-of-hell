@@ -462,6 +462,44 @@ RB_METHOD(monitorWindowHide) {
   return Qnil;
 }
 
+RB_METHOD(monitorSetAlwaysOnTop) {
+  MonitorWindow* window = getPrivateData<MonitorWindow>(self);
+
+  GUARD_DISPOSED(window);
+
+	bool top;
+	rb_get_args(argc, argv, "b", &top);
+
+	SDL_SetWindowAlwaysOnTop(window->window, top);
+
+	return Qnil;
+}
+
+RB_METHOD(monitorFlashWindow) {
+  MonitorWindow* window = getPrivateData<MonitorWindow>(self);
+
+  GUARD_DISPOSED(window);
+
+	int state;
+	rb_get_args(argc, argv, "i", &state);
+
+	if (state < SDL_FLASH_CANCEL || state > SDL_FLASH_UNTIL_FOCUSED)
+		rb_raise(rb_eArgError, "Invalid flash state");
+
+	SDL_FlashWindow(window->window, (SDL_FlashOperation) state);
+	return Qnil;
+}
+
+RB_METHOD(monitorWindowRaise) {
+  MonitorWindow* window = getPrivateData<MonitorWindow>(self);
+
+  GUARD_DISPOSED(window);
+
+	SDL_RaiseWindow(window->window);
+
+	return Qnil;
+}
+
 void osfmBindingInit() {
 
   VALUE klass = rb_define_class("MonitorWindow", rb_cObject);
@@ -475,6 +513,9 @@ void osfmBindingInit() {
   _rb_define_method(klass, "position", monitorWindowPos);
   _rb_define_method(klass, "show", monitorWindowShow);
   _rb_define_method(klass, "hide", monitorWindowHide);
+  _rb_define_method(klass, "set_always_on_top", monitorSetAlwaysOnTop);
+  _rb_define_method(klass, "flash", monitorFlashWindow);
+  _rb_define_method(klass, "raise", monitorWindowRaise);
 
   rb_define_const(klass, "UNDEFINED_POS", INT2NUM(SDL_WINDOWPOS_UNDEFINED));
   rb_define_const(klass, "CENTERED_POS", INT2NUM(SDL_WINDOWPOS_CENTERED));
