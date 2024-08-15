@@ -31,7 +31,7 @@
 #include "sdl-util.h"
 #include "debugwriter.h"
 
-#include <SDL3/SDL_Mutex.h>
+#include <SDL3/SDL_mutex.h>
 #include <SDL3/SDL_thread.h>
 #include <SDL3/SDL_timer.h>
 
@@ -208,25 +208,25 @@ struct ALStreamOpenHandler : FileSystem::OpenHandler
 	std::string errorMsg;
 
 	ALStreamOpenHandler(SDL_IOStream *srcOps, bool looped)
-	    : srcOps(&srcOps), looped(looped), source(0), fallbackMode(0)
+	    : srcOps(srcOps), looped(looped), source(0), fallbackMode(0)
 	{}
 
 	bool tryRead(SDL_IOStream *ops, const char *ext)
 	{
 		/* Copy this because we need to keep it around,
 		 * as we will continue reading data from it later */
-		*srcOps = ops;
+		srcOps = ops;
 
 		/* Try to read ogg file signature */
 		char sig[5] = { 0 };
-		SDL_ReadIO(srcOps, sig, 1, 4);
+		SDL_ReadIO(srcOps, sig, 4);
 		SDL_SeekIO(srcOps, 0, SDL_IO_SEEK_SET);
 
 		try
 		{
 			if (!strcmp(sig, "OggS"))
 			{
-				source = createVorbisSource(*srcOps, looped);
+				source = createVorbisSource(srcOps, looped);
 				return true;
 			}
 
@@ -236,12 +236,12 @@ struct ALStreamOpenHandler : FileSystem::OpenHandler
 
 				if (HAVE_FLUID)
 				{
-					source = createMidiSource(*srcOps, looped);
+					source = createMidiSource(srcOps, looped);
 					return true;
 				}
 			}
 
-			source = createSDLSource(*srcOps, ext, STREAM_BUF_SIZE, looped, fallbackMode);
+			source = createSDLSource(srcOps, ext, STREAM_BUF_SIZE, looped, fallbackMode);
 		}
 		catch (const Exception &e)
 		{
