@@ -52,7 +52,7 @@ extern "C" {
 #endif
 }
 
-#ifdef SDL_PLATFORM_WIN32
+#ifdef __WIN32__
 #include "binding-mri-win32.h"
 #endif
 
@@ -113,7 +113,7 @@ void oneshotSteamBindingInit();
 void oneshotJournalBindingInit();
 void oneshotNikoBindingInit();
 void oneshotWallpaperBindingInit();
-#ifdef SDL_PLATFORM_LINUX
+#ifdef __LINUX__
 void oneshotWallpaperBindingTerminate();
 #endif
 
@@ -335,7 +335,7 @@ static void mriBindingInit() {
     
     // Set $stdout and its ilk accordingly on Windows
     // I regret teaching you that word
-#ifdef SDL_PLATFORM_WIN32
+#ifdef __WIN32__
     if (shState->config().winConsole)
         configureWindowsStreams();
 #endif
@@ -521,7 +521,7 @@ RB_METHOD(mkxpUserName) {
     
     // Using the Windows API isn't working with usernames that involve Unicode
     // characters for some dumb reason
-#ifdef SDL_PLATFORM_WIN32
+#ifdef __WIN32__
     VALUE env = rb_const_get(rb_mKernel, rb_intern("ENV"));
     return rb_funcall(env, rb_intern("[]"), 1, rb_str_new_cstr("USERNAME"));
 #else
@@ -677,7 +677,7 @@ RB_METHOD(mkxpStringToUTF8Bang) {
     return self;
 }
 
-#ifdef SDL_PLATFORM_APPLE
+#ifdef __APPLE__
 #define OPENCMD "open "
 #define OPENARGS "--args"
 #elif defined(__linux__)
@@ -1234,7 +1234,7 @@ static void mriBindingExecute() {
 #else
     ruby_init();
     rb_eval_string("$KCODE='U'");
-#ifdef SDL_PLATFORM_WIN32
+#ifdef __WIN32__
     if (!conf.winConsole) {
         VALUE iostr = rb_str_new2("NUL");
         // Sysinit isn't a thing yet, so send io to /dev/null instead

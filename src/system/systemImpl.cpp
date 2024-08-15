@@ -7,7 +7,7 @@
 
 #include "system.h"
 
-#if defined(SDL_PLATFORM_WIN32)
+#if defined(__WIN32__)
 #include <stdlib.h>
 #include <windows.h>
 #else
@@ -20,7 +20,7 @@
 
 std::string systemImpl::getSystemLanguage() {
     static char buf[50] = {0};
-#if defined(SDL_PLATFORM_WIN32)
+#if defined(__WIN32__)
     wchar_t wbuf[50] = {0};
     LANGID lid = GetUserDefaultLangID();
     LCIDToLocaleName(lid, wbuf, sizeof(wbuf), 0);
@@ -30,7 +30,7 @@ std::string systemImpl::getSystemLanguage() {
 #endif
     
     for (int i = 0; (size_t)i < strlen(buf); i++) {
-#ifdef SDL_PLATFORM_WIN32
+#ifdef __WIN32__
         if (buf[i] == '-') {
             buf[i] = '_';
 #else
@@ -45,7 +45,7 @@ std::string systemImpl::getSystemLanguage() {
 
 std::string systemImpl::getUserName() {
     
-#ifdef SDL_PLATFORM_WIN32
+#ifdef __WIN32__
     // The Ruby binding gets the username from the environment loaded
     // with Ruby instead, should fix getting it from WinAPI at some point
     return std::string("unused");
