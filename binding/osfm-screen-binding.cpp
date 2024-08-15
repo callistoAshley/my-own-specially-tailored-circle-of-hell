@@ -447,7 +447,7 @@ RB_METHOD(monitorWindowShow) {
 
   GUARD_DISPOSED(window);
 
-  SDL_ShowWindow(window->window);
+  shState->eThread().requestWindowVisible(window->window, true);
 
   return Qnil;
 }
@@ -457,7 +457,7 @@ RB_METHOD(monitorWindowHide) {
 
   GUARD_DISPOSED(window);
 
-  SDL_HideWindow(window->window);
+  shState->eThread().requestWindowVisible(window->window, false);
 
   return Qnil;
 }
