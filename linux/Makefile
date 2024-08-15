@@ -4,8 +4,8 @@ ARCH_CFLAGS ?=
 ARCH_CONFIGURE ?= $(shell gcc -dumpmachine)
 
 SDL_FLAGS := ${SDL_FLAGS}
-SDL2_IMAGE_FLAGS := ${SDL2_IMAGE_FLAGS}
-SDL2_TTF_FLAGS := ${SDL2_TTF_FLAGS}
+SDL3_IMAGE_FLAGS := ${SDL3_IMAGE_FLAGS}
+SDL3_TTF_FLAGS := ${SDL3_TTF_FLAGS}
 OPENAL_FLAGS := -DALSOFT_CPUEXT_NEON=no ${OPENAL_FLAGS}
 OPENSSL_FLAGS := linux-$(ARCH_OPENSSL) ${OPENSSL_FLAGS}
 RUBY_FLAGS := ${RUBY_FLAGS}
@@ -189,91 +189,80 @@ $(DOWNLOADS)/libpng/Makefile: $(DOWNLOADS)/libpng/configure
 $(DOWNLOADS)/libpng/configure:
 	$(CLONE) $(GITHUB)/mkxp-z/libpng $(DOWNLOADS)/libpng
 
-# SDL2
-sdl2: init_dirs $(LIBDIR)/libSDL2.a
+# Sdl3
+sdl3: init_dirs $(LIBDIR)/libSDL3.a
 
-$(LIBDIR)/libSDL2.a: $(DOWNLOADS)/sdl2/cmakebuild/Makefile
-	cd $(DOWNLOADS)/sdl2/cmakebuild; \
-	make -j$(NPROC); make install
+$(LIBDIR)/libSDL3.a: $(DOWNLOADS)/sdl3/cmakebuild/Makefile
+	cd $(DOWNLOADS)/sdl3/cmakebuild; \
+	$(MAKE) -j$(NPROC); $(MAKE) install
 
-$(DOWNLOADS)/sdl2/cmakebuild/Makefile: $(DOWNLOADS)/sdl2/CMakeLists.txt
-	cd $(DOWNLOADS)/sdl2; \
-	mkdir cmakebuild; cd cmakebuild; \
-	$(CMAKE) -DBUILD_SHARED_LIBS=no
+$(DOWNLOADS)/sdl3/cmakebuild/Makefile: $(DOWNLOADS)/sdl3/CMakeLists.txt
+	cd $(DOWNLOADS)/sdl3; mkdir -p cmakebuild; cd cmakebuild; \
+	$(CMAKE) -DSDL_STATIC=1 -DSDL_SHARED=0
 
-$(DOWNLOADS)/sdl2/CMakeLists.txt:
-	$(CLONE) $(GITHUB)/Astrabit-ST/SDL $(DOWNLOADS)/sdl2 -b mkxp-z-2.28.1
+# need to clone at a specific commit (the sdl3 repo keeps removing the sdl3 tags??)
+$(DOWNLOADS)/sdl3/CMakeLists.txt:
+	$(CLONE) --no-checkout $(GITHUB)/libsdl-org/SDL $(DOWNLOADS)/sdl3
+# Commit made Aug 14 2024
+	cd $(DOWNLOADS)/sdl3; git checkout d60e6e25581731f5f0dddd46b45132ba991ff1d6
 
 # SDL_image
-sdl2image: init_dirs sdl2 $(LIBDIR)/libSDL2_image.a
+sdl3image: init_dirs sdl3 $(LIBDIR)/libSDL3_image.a
 
-$(LIBDIR)/libSDL2_image.a: $(DOWNLOADS)/sdl2_image/cmakebuild/Makefile
-	cd $(DOWNLOADS)/sdl2_image/cmakebuild; \
+$(LIBDIR)/libSDL3_image.a: $(DOWNLOADS)/sdl3_image/cmakebuild/Makefile
+	cd $(DOWNLOADS)/sdl3_image/cmakebuild; \
 	make -j$(NPROC); make install
 
-$(DOWNLOADS)/sdl2_image/cmakebuild/Makefile: $(DOWNLOADS)/sdl2_image/CMakeLists.txt
-	cd $(DOWNLOADS)/sdl2_image; mkdir -p cmakebuild; cd cmakebuild; \
+$(DOWNLOADS)/sdl3_image/cmakebuild/Makefile: $(DOWNLOADS)/sdl3_image/CMakeLists.txt
+	cd $(DOWNLOADS)/sdl3_image; mkdir -p cmakebuild; cd cmakebuild; \
 	$(CMAKE) \
 	-DBUILD_SHARED_LIBS=no \
-	-DSDL2IMAGE_JPG_SAVE=yes \
-	-DSDL2IMAGE_PNG_SAVE=yes \
-	-DSDL2IMAGE_PNG_SHARED=no \
-	-DSDL2IMAGE_JPG_SHARED=no \
-	-DSDL2IMAGE_JXL=yes \
-	-DSDL2IMAGE_JXL_SHARED=no \
-	-DSDL2IMAGE_VENDORED=yes
+	-DSDL3IMAGE_JPG_SAVE=yes \
+	-DSDL3IMAGE_PNG_SAVE=yes \
+	-DSDL3IMAGE_PNG_SHARED=no \
+	-DSDL3IMAGE_JPG_SHARED=no \
+	-DSDL3IMAGE_JXL=yes \
+	-DSDL3IMAGE_JXL_SHARED=no \
+	-DSDL3IMAGE_AVIF=no \
+	-DSDL3IMAGE_VENDORED=yes
+# AVIF building fails on my machine (no idea)
+# FIXME: one of these requires nasm!
 
-$(DOWNLOADS)/sdl2_image/CMakeLists.txt:
-	$(CLONE) $(GITHUB)/mkxp-z/SDL_image $(DOWNLOADS)/sdl2_image -b mkxp-z; \
-	cd $(DOWNLOADS)/sdl2_image; \
+$(DOWNLOADS)/sdl3_image/CMakeLists.txt:
+	$(CLONE) --no-checkout $(GITHUB)/libsdl-org/SDL_image $(DOWNLOADS)/sdl3_image
+# Commit made Aug 14 2024
+	cd $(DOWNLOADS)/sdl3_image; git checkout 5c5051cb3e594cf301e76f6e6b55df1c6b54c04b; \
 	./external/download.sh
 
-# SDL_sound
-sdlsound: init_dirs sdl2 libogg libvorbis $(LIBDIR)/libSDL2_sound.a
+# SDL3_sound
+sdl3sound: init_dirs sdl3 libogg libvorbis $(LIBDIR)/libSDL3_sound.a
 
-$(LIBDIR)/libSDL2_sound.a: $(DOWNLOADS)/sdl_sound/cmakebuild/Makefile
-	cd $(DOWNLOADS)/sdl_sound/cmakebuild; \
+$(LIBDIR)/libSDL3_sound.a: $(DOWNLOADS)/sdl3_sound/cmakebuild/Makefile
+	cd $(DOWNLOADS)/sdl3_sound/cmakebuild; \
 	make -j$(NPROC); make install
 
-$(DOWNLOADS)/sdl_sound/cmakebuild/Makefile: $(DOWNLOADS)/sdl_sound/CMakeLists.txt
-	cd $(DOWNLOADS)/sdl_sound; mkdir -p cmakebuild; cd cmakebuild; \
+$(DOWNLOADS)/sdl3_sound/cmakebuild/Makefile: $(DOWNLOADS)/sdl3_sound/CMakeLists.txt
+	cd $(DOWNLOADS)/sdl3_sound; mkdir -p cmakebuild; cd cmakebuild; \
 	$(CMAKE) \
 	-DSDLSOUND_BUILD_SHARED=false \
 	-DSDLSOUND_BUILD_TEST=false
 
-$(DOWNLOADS)/sdl_sound/CMakeLists.txt:
-	$(CLONE) $(GITHUB)/mkxp-z/SDL_sound $(DOWNLOADS)/sdl_sound -b git
+$(DOWNLOADS)/sdl3_sound/CMakeLists.txt:
+	$(CLONE) $(GITHUB)/Astrabit-ST/SDL3_sound $(DOWNLOADS)/sdl3_sound
 
-# SDL2 (ttf)
-sdl2ttf: init_dirs sdl2 freetype $(LIBDIR)/libSDL2_ttf.a
+# SDL3 (ttf)
+sdl3ttf: init_dirs sdl3 $(LIBDIR)/libSDL3_ttf.a
 
-$(LIBDIR)/libSDL2_ttf.a: $(DOWNLOADS)/sdl2_ttf/cmakebuild/Makefile
-	cd $(DOWNLOADS)/sdl2_ttf/cmakebuild; \
+$(LIBDIR)/libSDL3_ttf.a: $(DOWNLOADS)/sdl3_ttf/cmakebuild/Makefile
+	cd $(DOWNLOADS)/sdl3_ttf/cmakebuild; \
 	make -j$(NPROC); make install
 
-$(DOWNLOADS)/sdl2_ttf/cmakebuild/Makefile: $(DOWNLOADS)/sdl2_ttf/CMakeLists.txt
-	cd $(DOWNLOADS)/sdl2_ttf; mkdir cmakebuild; cd cmakebuild; \
-	$(CMAKE) -DBUILD_SHARED_LIBS=no
+$(DOWNLOADS)/sdl3_ttf/cmakebuild/Makefile: $(DOWNLOADS)/sdl3_ttf/CMakeLists.txt
+	cd $(DOWNLOADS)/sdl3_ttf; mkdir cmakebuild; cd cmakebuild; \
+	$(CMAKE) -DBUILD_SHARED_LIBS=no -DSDL3TTF_FREETYPE_VENDORED=yes
 
-$(DOWNLOADS)/sdl2_ttf/CMakeLists.txt:
-	$(CLONE) $(GITHUB)/mkxp-z/sdl_ttf $(DOWNLOADS)/sdl2_ttf
-
-# Freetype (dependency of SDL2_ttf)
-freetype: init_dirs $(LIBDIR)/libfreetype.a
-
-$(LIBDIR)/libfreetype.a: $(DOWNLOADS)/freetype/Makefile
-	cd $(DOWNLOADS)/freetype; \
-	make -j$(NPROC); make install
-
-$(DOWNLOADS)/freetype/Makefile: $(DOWNLOADS)/freetype/configure
-	cd $(DOWNLOADS)/freetype; \
-	$(CONFIGURE) --enable-static=true --enable-shared=false
-
-$(DOWNLOADS)/freetype/configure: $(DOWNLOADS)/freetype/autogen.sh
-	cd $(DOWNLOADS)/freetype; ./autogen.sh
-
-$(DOWNLOADS)/freetype/autogen.sh:
-	$(CLONE) $(GITHUB)/mkxp-z/freetype2 $(DOWNLOADS)/freetype
+$(DOWNLOADS)/sdl3_ttf/CMakeLists.txt:
+	$(CLONE) $(GITHUB)/libsdl-org/SDL_ttf $(DOWNLOADS)/sdl3_ttf
 
 # OpenAL
 openal: init_dirs libogg $(LIBDIR)/libopenal.a
@@ -339,22 +328,6 @@ $(DOWNLOADS)/ruby/configure: $(DOWNLOADS)/ruby/configure.ac
 $(DOWNLOADS)/ruby/configure.ac:
 	$(CLONE) $(GITHUB)/ruby/ruby $(DOWNLOADS)/ruby --single-branch --branch v3_1_4 --depth 1;
 
-sdl3: init_dirs $(LIBDIR)/libSDL3.a
-
-$(LIBDIR)/libSDL3.a: $(DOWNLOADS)/sdl3/cmakebuild/Makefile
-	cd $(DOWNLOADS)/sdl3/cmakebuild; \
-	$(MAKE) -j$(NPROC); $(MAKE) install
-
-$(DOWNLOADS)/sdl3/cmakebuild/Makefile: $(DOWNLOADS)/sdl3/CMakeLists.txt
-	cd $(DOWNLOADS)/sdl3; mkdir -p cmakebuild; cd cmakebuild; \
-	$(CMAKE) -DSDL_STATIC=1 -DSDL_SHARED=0
-
-# need to clone at a specific commit (the sdl3 repo keeps removing the sdl3 tags??)
-$(DOWNLOADS)/sdl3/CMakeLists.txt:
-	$(CLONE) --no-checkout $(GITHUB)/libsdl-org/SDL $(DOWNLOADS)/sdl3
-# Commit made Aug 14 2024
-	cd $(DOWNLOADS)/sdl3; git checkout d60e6e25581731f5f0dddd46b45132ba991ff1d6
-
 libzmq: init_dirs $(LIBDIR)/libzmq.a
 
 $(LIBDIR)/libzmq.a: $(DOWNLOADS)/libzmq/cmakebuild/Makefile
@@ -390,5 +363,5 @@ powerwash: clean-downloads
 clean-downloads:
 	-rm -rf downloads
 
-deps-core: libtheora libvorbis pixman libpng physfs sdl2 sdl2image sdlsound sdl2ttf openal openssl fluidsynth uchardet iconv cppzmq sdl3
+deps-core: libtheora libvorbis pixman libpng physfs sdl3 sdl3image sdl3sound sdl3ttf openal openssl fluidsynth uchardet iconv cppzmq
 everything: deps-core ruby
