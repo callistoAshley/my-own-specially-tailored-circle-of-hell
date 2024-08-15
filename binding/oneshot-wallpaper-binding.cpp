@@ -26,7 +26,7 @@
 	static bool setTile = false;
 	static bool isCached = false;
 #else
-	#ifdef SDL_PLATFORM_APPLE
+	#ifdef __APPLE__
 		#include "mac-desktop.h"
 		static bool isCached = false;
 	#else
@@ -253,7 +253,7 @@ end:
 
 	Debug() << "Setting wallpaper to " << path;
 
-	#ifdef SDL_PLATFORM_APPLE
+	#ifdef __APPLE__
 		if (!isCached) {
 			MacDesktop::CacheCurrentBackground();
 			isCached = true;
@@ -391,7 +391,7 @@ RB_METHOD(wallpaperReset)
 			RegCloseKey(hKey);
 	}
 #else
-	#ifdef SDL_PLATFORM_APPLE
+	#ifdef __APPLE__
 		MacDesktop::ResetBackground();
 	#else
 		desktopEnvironmentInit();

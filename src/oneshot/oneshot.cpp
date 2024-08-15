@@ -22,14 +22,13 @@
 	#include <mmsystem.h>
 	#include <security.h>
 	#include <shlobj.h>
-	#include <SDL3/SDL_syswm.h>
-#elif defined SDL_PLATFORM_APPLE || __linux__
+#elif defined __APPLE__ || __linux__
 	#include <stdlib.h>
 	#include <unistd.h>
 	#include <pwd.h>
 	#include <dlfcn.h>
 
-	#ifdef SDL_PLATFORM_APPLE
+	#ifdef __APPLE__
 		#define OS_OSX
 		#include <dispatch/dispatch.h>
 	#else

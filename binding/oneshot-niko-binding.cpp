@@ -8,7 +8,7 @@
 #define NIKO_Y ((13 * 16) * 2)
 
 #include <filesystem>
-#ifdef SDL_PLATFORM_WIN32
+#ifdef __WIN32__
 #include <process.h>
 #else
 #include <unistd.h>
@@ -40,10 +40,10 @@ RB_METHOD(nikoStart) {
   auto pwd = std::filesystem::current_path();
   std::string dir = pwd.string();
 
-#ifdef SDL_PLATFORM_WIN32
+#ifdef __WIN32__
   dir += "\\_______.exe";
 #endif
-#ifdef SDL_PLATFORM_LINUX
+#ifdef __LINUX__
   dir += "/_______";
 #endif
 
@@ -53,7 +53,7 @@ RB_METHOD(nikoStart) {
       const_cast<char*>(dir.c_str()), const_cast<char*>(window_x.c_str()),
       const_cast<char*>(window_y.c_str())};
 
-#ifdef SDL_PLATFORM_WIN32
+#ifdef __WIN32__
   spawnv(_P_DETACH, dir.c_str(), args);
 #else
   pid_t pid = fork();

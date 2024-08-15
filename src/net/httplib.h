@@ -249,7 +249,7 @@ using socket_t = int;
 #pragma comment(lib, "crypt32.lib")
 #pragma comment(lib, "cryptui.lib")
 #endif
-#elif defined(CPPHTTPLIB_USE_CERTS_FROM_MACOSX_KEYCHAIN) && defined(SDL_PLATFORM_APPLE)
+#elif defined(CPPHTTPLIB_USE_CERTS_FROM_MACOSX_KEYCHAIN) && defined(__APPLE__)
 #include <TargetConditionals.h>
 #if TARGET_OS_OSX
 #include <CoreFoundation/CoreFoundation.h>
@@ -3281,7 +3281,7 @@ inline void get_remote_ip_and_port(socket_t sock, std::string &ip, int &port) {
       if (getsockopt(sock, SOL_SOCKET, SO_PEERCRED, &ucred, &len) == 0) {
         port = ucred.pid;
       }
-#elif defined(SOL_LOCAL) && defined(SO_PEERPID) // SDL_PLATFORM_APPLE
+#elif defined(SOL_LOCAL) && defined(SO_PEERPID) // __APPLE__
       pid_t pid;
       socklen_t len = sizeof(pid);
       if (getsockopt(sock, SOL_LOCAL, SO_PEERPID, &pid, &len) == 0) {
@@ -4804,7 +4804,7 @@ inline bool load_system_certs_on_windows(X509_STORE *store) {
 
   return result;
 }
-#elif defined(CPPHTTPLIB_USE_CERTS_FROM_MACOSX_KEYCHAIN) && defined(SDL_PLATFORM_APPLE)
+#elif defined(CPPHTTPLIB_USE_CERTS_FROM_MACOSX_KEYCHAIN) && defined(__APPLE__)
 #if TARGET_OS_OSX
 template <typename T>
 using CFObjectPtr =
@@ -8524,7 +8524,7 @@ inline bool SSLClient::load_certs() {
 #ifdef _WIN32
       loaded =
           detail::load_system_certs_on_windows(SSL_CTX_get_cert_store(ctx_));
-#elif defined(CPPHTTPLIB_USE_CERTS_FROM_MACOSX_KEYCHAIN) && defined(SDL_PLATFORM_APPLE)
+#elif defined(CPPHTTPLIB_USE_CERTS_FROM_MACOSX_KEYCHAIN) && defined(__APPLE__)
 #if TARGET_OS_OSX
       loaded = detail::load_system_certs_on_macos(SSL_CTX_get_cert_store(ctx_));
 #endif // TARGET_OS_OSX
