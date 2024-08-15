@@ -27,14 +27,14 @@
 struct SDLSoundSource : ALDataSource
 {
 	Sound_Sample *sample;
-	SDL_IOStream &srcOps;
+	SDL_IOStream *srcOps;
 	uint8_t sampleSize;
 	bool looped;
 
 	ALenum alFormat;
 	ALsizei alFreq;
 
-	SDLSoundSource(SDL_IOStream &ops,
+	SDLSoundSource(SDL_IOStream *ops,
 	               const char *extension,
 	               uint32_t maxBufSize,
 	               bool looped,
@@ -159,7 +159,7 @@ struct SDLSoundSource : ALDataSource
 	}
 };
 
-ALDataSource *createSDLSource(SDL_IOStream &ops,
+ALDataSource *createSDLSource(SDL_IOStream *ops,
                               const char *extension,
 			                  uint32_t maxBufSize,
 			                  bool looped,

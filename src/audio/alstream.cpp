@@ -207,11 +207,11 @@ struct ALStreamOpenHandler : FileSystem::OpenHandler
 	int fallbackMode;
 	std::string errorMsg;
 
-	ALStreamOpenHandler(SDL_IOStream &srcOps, bool looped)
+	ALStreamOpenHandler(SDL_IOStream *srcOps, bool looped)
 	    : srcOps(&srcOps), looped(looped), source(0), fallbackMode(0)
 	{}
 
-	bool tryRead(SDL_IOStream &ops, const char *ext)
+	bool tryRead(SDL_IOStream *ops, const char *ext)
 	{
 		/* Copy this because we need to keep it around,
 		 * as we will continue reading data from it later */

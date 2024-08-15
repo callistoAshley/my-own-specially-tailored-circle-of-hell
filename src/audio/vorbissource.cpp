@@ -53,7 +53,7 @@ static ov_callbacks OvCallbacks =
 
 struct VorbisSource : ALDataSource
 {
-	SDL_IOStream &src;
+	SDL_IOStream *src;
 
 	OggVorbis_File vf;
 
@@ -78,7 +78,7 @@ struct VorbisSource : ALDataSource
 
 	std::vector<int16_t> sampleBuf;
 
-	VorbisSource(SDL_IOStream &ops,
+	VorbisSource(SDL_IOStream *ops,
 	             bool looped)
 	    : src(ops),
 	      currentFrame(0)
@@ -282,7 +282,7 @@ struct VorbisSource : ALDataSource
 	}
 };
 
-ALDataSource *createVorbisSource(SDL_IOStream &ops,
+ALDataSource *createVorbisSource(SDL_IOStream *ops,
                                  bool looped)
 {
 	return new VorbisSource(ops, looped);

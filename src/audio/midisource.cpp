@@ -613,7 +613,7 @@ struct MidiSource : ALDataSource, MidiReadHandler
 	/* MidiReadHandler (track that's currently being read) */
 	int16_t curTrack;
 
-	MidiSource(SDL_IOStream &ops,
+	MidiSource(SDL_IOStream *ops,
 	           bool looped)
 	    : freq(SYNTH_SAMPLERATE),
 	      looped(looped),
@@ -916,7 +916,7 @@ struct MidiSource : ALDataSource, MidiReadHandler
 	}
 };
 
-ALDataSource *createMidiSource(SDL_IOStream &ops,
+ALDataSource *createMidiSource(SDL_IOStream *ops,
                                bool looped)
 {
 	return new MidiSource(ops, looped);

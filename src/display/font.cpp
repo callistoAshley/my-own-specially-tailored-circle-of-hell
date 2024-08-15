@@ -138,10 +138,10 @@ SharedFontState::~SharedFontState()
 	delete p;
 }
 
-void SharedFontState::initFontSetCB(SDL_IOStream &ops,
+void SharedFontState::initFontSetCB(SDL_IOStream *ops,
                                     const std::string &filename)
 {
-	TTF_Font *font = TTF_OpenFontIO(&ops, 0, 0);
+	TTF_Font *font = TTF_OpenFontIO(ops, 0, 0);
 
 	if (!font)
 		return;

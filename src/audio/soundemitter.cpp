@@ -194,7 +194,7 @@ struct SoundOpenHandler : FileSystem::OpenHandler
 	    : buffer(0)
 	{}
 
-	bool tryRead(SDL_IOStream &ops, const char *ext)
+	bool tryRead(SDL_IOStream *ops, const char *ext)
 	{
 		Sound_Sample *sample = Sound_NewSample(&ops, ext, 0, STREAM_BUF_SIZE);
 

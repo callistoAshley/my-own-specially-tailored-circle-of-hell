@@ -44,7 +44,7 @@ public:
 	 * (when "Fonts/" is scanned for available assets).
 	 * 'ops' is an opened handle to a possible font file,
 	 * 'filename' is the corresponding path */
-	void initFontSetCB(SDL_IOStream &ops,
+	void initFontSetCB(SDL_IOStream *ops,
 	                   const std::string &filename);
 
 	TTF_Font *getFont(std::string family,
