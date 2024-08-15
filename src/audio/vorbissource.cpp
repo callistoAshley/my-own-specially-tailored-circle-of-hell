@@ -29,12 +29,12 @@
 
 static size_t vfRead(void *ptr, size_t size, size_t nmemb, void *ops)
 {
-	return SDL_ReadIO(static_cast<SDL_IOStream*>(ops), ptr, size, nmemb);
+	return SDL_ReadIO(static_cast<SDL_IOStream*>(ops), ptr, size * nmemb) / size;
 }
 
 static int vfSeek(void *ops, ogg_int64_t offset, int whence)
 {
-	return SDL_SeekIO(static_cast<SDL_IOStream*>(ops), offset, whence);
+	return SDL_SeekIO(static_cast<SDL_IOStream*>(ops), offset, (SDL_IOWhence) whence);
 }
 
 static long vfTell(void *ops)
@@ -87,7 +87,7 @@ struct VorbisSource : ALDataSource
 
 		if (error)
 		{
-			SDL_CloseIO(&src);
+			SDL_CloseIO(src);
 			throw Exception(Exception::MKXPError,
 			                "Vorbisfile: Cannot read ogg file");
 		}
@@ -99,7 +99,7 @@ struct VorbisSource : ALDataSource
 		if (info.channels > 2)
 		{
 			ov_clear(&vf);
-			SDL_CloseIO(&src);
+			SDL_CloseIO(src);
 			throw Exception(Exception::MKXPError,
 			                "Cannot handle audio with more than 2 channels");
 		}
@@ -148,7 +148,7 @@ struct VorbisSource : ALDataSource
 	~VorbisSource()
 	{
 		ov_clear(&vf);
-		SDL_CloseIO(&src);
+		SDL_CloseIO(src);
 	}
 
 	int sampleRate()
