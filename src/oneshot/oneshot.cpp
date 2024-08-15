@@ -346,11 +346,13 @@ void Oneshot::update()
 		screenRect.w = 640;
 		screenRect.h = 480;
 
+		int display_count;
+		SDL_DisplayID *ids = SDL_GetDisplays(&display_count);
 		//Update obscured map and texture for window portion offscreen
-		for (int i = 0, max = SDL_GetNumVideoDisplays(); i < max; ++i)
+		for (int i = 0, max = display_count; i < max; ++i)
 		{
 			SDL_Rect bounds;
-			SDL_GetDisplayBounds(i, &bounds);
+			SDL_GetDisplayBounds(ids[i], &bounds);
 
 			//Get intersection of window and the screen
 			SDL_Rect intersect;
