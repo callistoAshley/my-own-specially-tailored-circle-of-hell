@@ -153,15 +153,15 @@ std::unordered_map<int, int> vKeyToScancode{
     m(0xaa, AC_SEARCH),
     // 0xab BROWSER_FAVORITES
     m(0xac, AC_HOME),
-    m(0xad, AUDIOMUTE),
+    m(0xad, MUTE),
     m(0xae, VOLUMEDOWN),
     m(0xaf, VOLUMEUP),
-    m(0xb0, AUDIONEXT),
-    m(0xb1, AUDIOPREV),
-    m(0xb2, AUDIOSTOP),
-    m(0xb3, AUDIOPLAY),
-    m(0xb4, MAIL),
-    m(0xb5, MEDIASELECT),
+    m(0xb0, MEDIA_NEXT_TRACK),
+    m(0xb1, MEDIA_PREVIOUS_TRACK),
+    m(0xb2, MEDIA_STOP),
+    m(0xb3, MEDIA_PLAY),
+    m(0xb4, CALL),
+    m(0xb5, MEDIA_SELECT),
     // 0xb6 LAUNCH_APP1
     // 0xb7 LAUNCH_APP2
     // 0xb8-0xb9 reserved
@@ -195,7 +195,7 @@ std::unordered_map<int, int> vKeyToScancode{
     m(0xf7, CRSEL),
     m(0xf8, EXSEL),
     // 0xf9 EREOF
-    m(0xfa, AUDIOPLAY), // PLAY, guessing
+    m(0xfa, MEDIA_PLAY), // PLAY, guessing
     // 0xfb ZOOM
     // 0xfc NONAME
     // 0xfd PA1
@@ -222,24 +222,20 @@ std::unordered_map<std::string, int> strToScancode{
     m(ALTERASE),
     m(APOSTROPHE),
     m(APPLICATION),
-    m(AUDIOMUTE),
-    m(AUDIONEXT),
-    m(AUDIOPLAY),
-    m(AUDIOPREV),
-    m(AUDIOSTOP),
+    m(MUTE),
+    m(MEDIA_NEXT_TRACK),
+    m(MEDIA_PLAY),
+    m(MEDIA_PREVIOUS_TRACK),
+    m(MEDIA_STOP),
     m(B),
     m(BACKSLASH),
     m(BACKSPACE),
-    m(BRIGHTNESSDOWN),
-    m(BRIGHTNESSUP),
     m(C),
-    m(CALCULATOR),
     m(CANCEL),
     m(CAPSLOCK),
     m(CLEAR),
     m(CLEARAGAIN),
     m(COMMA),
-    m(COMPUTER),
     m(COPY),
     m(CRSEL),
     m(CURRENCYSUBUNIT),
@@ -248,10 +244,9 @@ std::unordered_map<std::string, int> strToScancode{
     m(D),
     m(DECIMALSEPARATOR),
     m(DELETE),
-    m(DISPLAYSWITCH),
     m(DOWN),
     m(E),
-    m(EJECT),
+    m(MEDIA_EJECT),
     m(END),
     m(EQUALS),
     m(ESCAPE),
@@ -280,9 +275,6 @@ std::unordered_map<std::string, int> strToScancode{
     m(INSERT),
     m(J),
     m(K),
-    m(KBDILLUMDOWN),
-    m(KBDILLUMTOGGLE),
-    m(KBDILLUMUP),
     m(KP_0),
     m(KP_00),
     m(KP_000),
@@ -348,8 +340,7 @@ std::unordered_map<std::string, int> strToScancode{
     m(LGUI),
     m(LSHIFT),
     m(M),
-    m(MAIL),
-    m(MEDIASELECT),
+    m(MEDIA_SELECT),
     m(MENU),
     m(MINUS),
     m(MODE),
@@ -399,7 +390,6 @@ std::unordered_map<std::string, int> strToScancode{
     m(VOLUMEDOWN),
     m(VOLUMEUP),
     m(W),
-    m(WWW),
     m(X),
     m(Y),
     m(Z),
@@ -422,13 +412,13 @@ std::unordered_map<std::string, int> strToScancode{
 };
 
 #undef m
-#define m(ctrl) {#ctrl, SDL_CONTROLLER_BUTTON_##ctrl}
+#define m(ctrl) {#ctrl, SDL_GAMEPAD_BUTTON_##ctrl}
 
 std::unordered_map<std::string, SDL_GamepadButton> strToGCButton {
-    m(A), m(B), m(X), m(Y),
+    m(SOUTH), m(EAST), m(WEST), m(NORTH),
     m(BACK), m(GUIDE), m(START),
-    m(LEFTSTICK), m(RIGHTSTICK),
-    m(LEFTSHOULDER), m(RIGHTSHOULDER),
+    m(LEFT_STICK), m(RIGHT_STICK),
+    m(LEFT_SHOULDER), m(RIGHT_SHOULDER),
     m(DPAD_UP), m(DPAD_DOWN), m(DPAD_LEFT), m(DPAD_RIGHT)
     
 };
@@ -1494,15 +1484,17 @@ const char *Input::getControllerName()
 int Input::getControllerPowerLevel()
 {
     if (!getControllerConnected())
-        return SDL_JOYSTICK_POWER_UNKNOWN;
+        return 0;
     
     SDL_Joystick *js = SDL_GetGamepadJoystick(shState->eThread().controller());
-    return SDL_JoystickCurrentPowerLevel(js);
+    int percent;
+    SDL_GetJoystickPowerInfo(js, &percent);
+    return percent;
 }
 
 bool Input::getTextInputMode()
 {
-    return (SDL_TextInputActive() == SDL_TRUE);
+    return (SDL_TextInputActive(shState->sdlWindow()) == SDL_TRUE);
 }
 
 void Input::setTextInputMode(bool mode)
