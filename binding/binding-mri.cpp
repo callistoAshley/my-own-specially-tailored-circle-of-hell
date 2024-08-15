@@ -113,7 +113,7 @@ void oneshotSteamBindingInit();
 void oneshotJournalBindingInit();
 void oneshotNikoBindingInit();
 void oneshotWallpaperBindingInit();
-#ifdef __LINUX__
+#ifdef __linux__
 void oneshotWallpaperBindingTerminate();
 #endif
 

@@ -43,7 +43,7 @@ RB_METHOD(nikoStart) {
 #ifdef __WIN32__
   dir += "\\_______.exe";
 #endif
-#ifdef __LINUX__
+#ifdef __linux__
   dir += "/_______";
 #endif
 
