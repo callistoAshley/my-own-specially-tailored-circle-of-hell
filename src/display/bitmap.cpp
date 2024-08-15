@@ -29,6 +29,7 @@
 
 #include <pixman.h>
 
+#include "SDL3/SDL_pixels.h"
 #include "gl-util.h"
 #include "gl-meta.h"
 #include "quad.h"
@@ -228,7 +229,7 @@ struct BitmapPrivate
      * getPixel calls. Is invalidated any time the bitmap
      * is modified */
     SDL_Surface *surface;
-    SDL_PixelFormat *format;
+    const SDL_PixelFormatDetails *format;
     
     /* The 'tainted' area describes which parts of the
      * bitmap are not cleared, ie. don't have 0 opacity.
@@ -272,7 +273,6 @@ struct BitmapPrivate
     ~BitmapPrivate()
     {
         prepareCon.disconnect();
-        SDL_FreeFormat(format);
         pixman_region_fini(&tainted);
     }
     
@@ -289,9 +289,9 @@ struct BitmapPrivate
     
     void allocSurface()
     {
-        surface = SDL_CreateRGBSurface(0, gl.width, gl.height, format->BitsPerPixel,
+        surface = SDL_CreateSurface(gl.width, gl.height, SDL_GetPixelFormatForMasks(format->bits_per_pixel,
                                        format->Rmask, format->Gmask,
-                                       format->Bmask, format->Amask);
+                                       format->Bmask, format->Amask));
     }
     
     void clearTaintedArea()
@@ -399,12 +399,12 @@ struct BitmapPrivate
         glState.scissorTest.pop();
     }
     
-    static void ensureFormat(SDL_Surface *&surf, Uint32 format)
+    static void ensureFormat(SDL_Surface *&surf, SDL_PixelFormat format)
     {
-        if (surf->format->format == format)
+        if (surf->format == format)
             return;
         
-        SDL_Surface *surfConv = SDL_ConvertSurface(surf, format, 0);
+        SDL_Surface *surfConv = SDL_ConvertSurface(surf, format);
         SDL_DestroySurface(surf);
         surf = surfConv;
     }
@@ -454,11 +454,11 @@ struct BitmapOpenHandler : FileSystem::OpenHandler
             
             gif_create(gif, &gif_bitmap_callbacks);
             
-            gif_data_size = ops.size(&ops);
+            gif_data_size = SDL_GetIOSize(&ops);
             
             gif_data = new unsigned char[gif_data_size];
-            ops.seek(&ops, 0, SDL_IO_SEEK_SET);
-            ops.read(&ops, gif_data, gif_data_size, 1);
+            SDL_SeekIO(&ops, 0, SDL_IO_SEEK_SET);
+            SDL_ReadIO(&ops, gif_data, gif_data_size);
             
             int status;
             do {
@@ -482,7 +482,7 @@ struct BitmapOpenHandler : FileSystem::OpenHandler
                 return false;
             }
         } else {
-            surface = IMG_LoadTyped_RW(&ops, 1, ext);
+            surface = IMG_LoadTyped_IO(&ops, 1, ext);
         }
         return (surface || gif);
     }
@@ -671,17 +671,17 @@ Bitmap::Bitmap(int width, int height, bool isHires)
 
 Bitmap::Bitmap(void *pixeldata, int width, int height)
 {
-    SDL_Surface *surface = SDL_CreateRGBSurface(0, width, height, p->format->BitsPerPixel,
+    SDL_Surface *surface = SDL_CreateSurface(width, height, SDL_GetPixelFormatForMasks(p->format->bits_per_pixel,
                                                 p->format->Rmask,
                                                 p->format->Gmask,
                                                 p->format->Bmask,
-                                                p->format->Amask);
+                                                p->format->Amask));
     
     if (!surface)
         throw Exception(Exception::SDLError, "Error creating Bitmap: %s",
                         SDL_GetError());
     
-    memcpy(surface->pixels, pixeldata, width*height*(p->format->BitsPerPixel/8));
+    memcpy(surface->pixels, pixeldata, width*height*(p->format->bits_per_pixel/8));
     
     if (surface->w > glState.caps.maxTexSize || surface->h > glState.caps.maxTexSize)
     {
@@ -1115,22 +1115,22 @@ void Bitmap::stretchBlt(IntRect destRect,
                 {
                     /* We have to resize it here anyway, so use software resizing */
                     blitTemp =
-                        SDL_CreateRGBSurface(0, abs(destRect.w), abs(destRect.h), p->format->BitsPerPixel,
+                        SDL_CreateSurface(abs(destRect.w), abs(destRect.h), SDL_GetPixelFormatForMasks(p->format->bits_per_pixel,
                                              p->format->Rmask, p->format->Gmask,
-                                             p->format->Bmask, p->format->Amask);
+                                             p->format->Bmask, p->format->Amask));
                     if (!blitTemp)
                         throw Exception(Exception::SDLError, "Error creating temporary surface for blitting: %s",
                                         SDL_GetError());
                     
                     if (smooth)
                     {
-                        error = SDL_SoftStretchLinear(srcSurf, &srcRect, blitTemp, 0);
+                        error = SDL_BlitSurfaceScaled(srcSurf, &srcRect, blitTemp, 0, SDL_SCALEMODE_LINEAR);
                         smooth = false;
                     }
                     else
                     {
                         SDL_Rect tmpRect = {0, 0, blitTemp->w, blitTemp->h};
-                        error = SDL_BlitSurfaceUncheckedScaled(srcSurf, &srcRect, blitTemp, &tmpRect);
+                        error = SDL_BlitSurfaceUncheckedScaled(srcSurf, &srcRect, blitTemp, &tmpRect, SDL_SCALEMODE_NEAREST); //???
                     }
                     unpack_subimage = false;
                 }
@@ -1138,9 +1138,9 @@ void Bitmap::stretchBlt(IntRect destRect,
                 {
                     /* Just crop it, let the shader resize it later */
                     blitTemp =
-                        SDL_CreateRGBSurface(0, sourceRect.w, sourceRect.h, p->format->BitsPerPixel,
+                        SDL_CreateSurface(sourceRect.w, sourceRect.h, SDL_GetPixelFormatForMasks(p->format->bits_per_pixel,
                                              p->format->Rmask, p->format->Gmask,
-                                             p->format->Bmask, p->format->Amask);
+                                             p->format->Bmask, p->format->Amask));
                     if (!blitTemp)
                         throw Exception(Exception::SDLError, "Error creating temporary surface for blitting: %s",
                                         SDL_GetError());
@@ -1618,9 +1618,9 @@ void Bitmap::clear()
     p->onModified();
 }
 
-static uint32_t &getPixelAt(SDL_Surface *surf, SDL_PixelFormat *form, int x, int y)
+static uint32_t &getPixelAt(SDL_Surface *surf, const SDL_PixelFormatDetails *form, int x, int y)
 {
-    size_t offset = x*form->BytesPerPixel + y*surf->pitch;
+    size_t offset = x*form->bits_per_pixel + y*surf->pitch;
     uint8_t *bytes = (uint8_t*) surf->pixels + offset;
     
     return *((uint32_t*) bytes);
@@ -1744,7 +1744,7 @@ void Bitmap::setPixel(int x, int y, const Color &color)
     if (p->surface)
     {
         uint32_t &surfPixel = getPixelAt(p->surface, p->format, x, y);
-        surfPixel = SDL_MapRGBA(p->format, pixel[0], pixel[1], pixel[2], pixel[3]);
+        surfPixel = SDL_MapSurfaceRGBA(p->surface, pixel[0], pixel[1], pixel[2], pixel[3]);
     }
     
     p->onModified(false);
@@ -1809,7 +1809,7 @@ void Bitmap::saveToFile(const char *filename)
         surf = (p->surface) ? p->surface : p->megaSurface;
     }
     else {
-        surf = SDL_CreateRGBSurface(0, width(), height(),p->format->BitsPerPixel, p->format->Rmask,p->format->Gmask,p->format->Bmask,p->format->Amask);
+        surf = SDL_CreateSurface(width(), height(),SDL_GetPixelFormatForMasks(p->format->bits_per_pixel, p->format->Rmask,p->format->Gmask,p->format->Bmask,p->format->Amask));
         
         if (!surf)
             throw Exception(Exception::SDLError, "Failed to prepare bitmap for saving: %s", SDL_GetError());
@@ -1921,10 +1921,10 @@ static std::string fixupString(const char *str)
     return s;
 }
 
-static void applyShadow(SDL_Surface *&in, const SDL_PixelFormat &fm, const SDL_Color &c)
+static void applyShadow(SDL_Surface *&in, const SDL_PixelFormatDetails &fm, const SDL_Color &c)
 {
-    SDL_Surface *out = SDL_CreateRGBSurface
-    (0, in->w+1, in->h+1, fm.BitsPerPixel, fm.Rmask, fm.Gmask, fm.Bmask, fm.Amask);
+    SDL_Surface *out = SDL_CreateSurface
+    (in->w+1, in->h+1, SDL_GetPixelFormatForMasks(fm.bits_per_pixel, fm.Rmask, fm.Gmask, fm.Bmask, fm.Amask));
     
     float fr = c.r / 255.0f;
     float fg = c.g / 255.0f;
@@ -2000,7 +2000,7 @@ static void applyShadow(SDL_Surface *&in, const SDL_PixelFormat &fm, const SDL_C
             b = clamp<float>(fb * co3, 0, 1) * 255.0f;
             a = clamp<float>(fa, 0, 1) * 255.0f;
             
-            *outP = SDL_MapRGBA(&fm, r, g, b, a);
+            *outP = SDL_MapSurfaceRGBA(out, r, g, b, a);
         }
     
     /* Store new surface in the input pointer */
