@@ -44,7 +44,7 @@ struct SDLSoundSource : ALDataSource
 	{
 		if (fallbackMode == 0)
 		{
-			sample = Sound_NewSample(&srcOps, extension, 0, maxBufSize);
+			sample = Sound_NewSample(srcOps, extension, 0, maxBufSize);
 		}
 		else
 		{
@@ -54,12 +54,12 @@ struct SDLSoundSource : ALDataSource
 			SDL_memset(&desired, '\0', sizeof (Sound_AudioInfo));
 			desired.format = SDL_AUDIO_F32;
 
-			sample = Sound_NewSample(&srcOps, extension, &desired, maxBufSize);
+			sample = Sound_NewSample(srcOps, extension, &desired, maxBufSize);
 		}
 
 		if (!sample)
 		{
-			SDL_CloseIO(&ops);
+			SDL_CloseIO(ops);
 			throw Exception(Exception::SDLError, "SDL_sound: %s", Sound_GetError());
 		}
 
