@@ -196,11 +196,11 @@ struct SoundOpenHandler : FileSystem::OpenHandler
 
 	bool tryRead(SDL_IOStream *ops, const char *ext)
 	{
-		Sound_Sample *sample = Sound_NewSample(&ops, ext, 0, STREAM_BUF_SIZE);
+		Sound_Sample *sample = Sound_NewSample(ops, ext, 0, STREAM_BUF_SIZE);
 
 		if (!sample)
 		{
-			SDL_CloseIO(&ops);
+			SDL_CloseIO(ops);
 			return false;
 		}
 
