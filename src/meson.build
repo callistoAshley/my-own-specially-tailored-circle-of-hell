@@ -9,6 +9,7 @@ png = dependency('libpng', static: build_static)
 zlib = dependency('zlib', static: build_static)
 uchardet = dependency('uchardet', static: build_static)
 cppzmq = dependency('cppzmq', static: true)
+freetype = dependency('freetype2', static: build_static)
 
 if host_system == 'windows'
     bz2 = dependency('bzip2', static: build_static)
@@ -104,7 +105,7 @@ if disable_openal == false
     global_include_dirs += include_directories('audio')
 endif
 
-global_dependencies += [zlib, bz2, sdl3, pixman, physfs, theora, sdl3_ttf, sdl3_image, png, iconv, uchardet, cppzmq, vorbis]
+global_dependencies += [zlib, bz2, sdl3, pixman, physfs, theora, sdl3_ttf, sdl3_image, png, iconv, uchardet, cppzmq, vorbis, freetype]
 if host_system == 'windows'
     global_dependencies += compilers['cpp'].find_library('wsock32')
     global_dependencies += compilers['cpp'].find_library('winmm')

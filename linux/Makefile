@@ -221,7 +221,7 @@ $(DOWNLOADS)/sdl3_image/cmakebuild/Makefile: $(DOWNLOADS)/sdl3_image/CMakeLists.
 	-DSDL3IMAGE_PNG_SAVE=yes \
 	-DSDL3IMAGE_PNG_SHARED=no \
 	-DSDL3IMAGE_JPG_SHARED=no \
-	-DSDL3IMAGE_JXL=yes \
+	-DSDL3IMAGE_JXL=no \
 	-DSDL3IMAGE_JXL_SHARED=no \
 	-DSDL3IMAGE_AVIF=no \
 	-DSDL3IMAGE_VENDORED=yes
@@ -259,10 +259,12 @@ $(LIBDIR)/libSDL3_ttf.a: $(DOWNLOADS)/sdl3_ttf/cmakebuild/Makefile
 
 $(DOWNLOADS)/sdl3_ttf/cmakebuild/Makefile: $(DOWNLOADS)/sdl3_ttf/CMakeLists.txt
 	cd $(DOWNLOADS)/sdl3_ttf; mkdir cmakebuild; cd cmakebuild; \
-	$(CMAKE) -DBUILD_SHARED_LIBS=no -DSDL3TTF_FREETYPE_VENDORED=yes
+	$(CMAKE) -DBUILD_SHARED_LIBS=no -DSDL3TTF_VENDORED=ON
 
 $(DOWNLOADS)/sdl3_ttf/CMakeLists.txt:
 	$(CLONE) $(GITHUB)/libsdl-org/SDL_ttf $(DOWNLOADS)/sdl3_ttf
+	cd $(DOWNLOADS)/sdl3_ttf; git checkout 22347419ee08e49d77411c680f15e314ef870ab7; \
+	./external/download.sh
 
 # OpenAL
 openal: init_dirs libogg $(LIBDIR)/libopenal.a
