@@ -68,8 +68,7 @@ public:
 	              const char *filename);
 
 	/* Circumvents extension supplementing */
-	void openReadRaw(SDL_IOStream &ops,
-	                 const char *filename,
+	SDL_IOStream* openReadRaw(const char *filename,
 	                 bool freeOnClose = false);
 
 	std::string normalize(const char *pathname, bool preferred, bool absolute);

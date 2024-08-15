@@ -141,7 +141,7 @@ SharedFontState::~SharedFontState()
 void SharedFontState::initFontSetCB(SDL_IOStream &ops,
                                     const std::string &filename)
 {
-	TTF_Font *font = TTF_OpenFontRW(&ops, 0, 0);
+	TTF_Font *font = TTF_OpenFontIO(&ops, 0, 0);
 
 	if (!font)
 		return;
@@ -162,7 +162,7 @@ void SharedFontState::initFontSetCB(SDL_IOStream &ops,
 		set.other = filename;
 }
 
-_TTF_Font *SharedFontState::getFont(std::string family,
+TTF_Font *SharedFontState::getFont(std::string family,
                                     int size)
 {
 	std::transform(family.begin(), family.end(), family.begin(),
@@ -206,14 +206,13 @@ _TTF_Font *SharedFontState::getFont(std::string family,
 		const char *path = !req.regular.empty()
 		                 ? req.regular.c_str() : req.other.c_str();
 
-		ops = SDL_AllocRW();
-		shState->fileSystem().openReadRaw(*ops, path, true);
+		ops = shState->fileSystem().openReadRaw(path, true);
 	}
 
 	// FIXME 0.9 is guesswork at this point
 //	float gamma = (96.0/45.0)*(5.0/14.0)*(size-5);
 //	font = TTF_OpenFontRW(ops, 1, gamma /** .90*/);
-	font = TTF_OpenFontRW(ops, 1, size);
+	font = TTF_OpenFontIO(ops, 1, size);
 
 	if (!font)
 		throw Exception(Exception::SDLError, "%s", SDL_GetError());
@@ -237,11 +236,11 @@ bool SharedFontState::fontPresent(std::string family) const
 	return !(set.regular.empty() && set.other.empty());
 }
 
-_TTF_Font *SharedFontState::openBundled(int size)
+TTF_Font *SharedFontState::openBundled(int size)
 {
 	SDL_IOStream *ops = openBundledFont();
 
-	return TTF_OpenFontRW(ops, 1, size);
+	return TTF_OpenFontIO(ops, 1, size);
 }
 
 void SharedFontState::setDefaultFontFamily(const std::string &family) {
@@ -511,7 +510,7 @@ void Font::initDefaults(const SharedFontState &sfs)
 	FontPrivate::defaultShadow  = (rgssVer == 2 ? true : false);
 }
 
-_TTF_Font *Font::getSdlFont()
+TTF_Font *Font::getSdlFont()
 {
 	if (!p->sdlFont)
 		p->sdlFont = shState->fontState().getFont(p->name.c_str(),
