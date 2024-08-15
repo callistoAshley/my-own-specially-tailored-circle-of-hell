@@ -21,11 +21,11 @@
 
 #include "bitmap.h"
 
-#include <SDL.h>
-#include <SDL_image.h>
-#include <SDL_ttf.h>
-#include <SDL_rect.h>
-#include <SDL_surface.h>
+#include <SDL3/SDL.h>
+#include <SDL3_image/SDL_image.h>
+#include <SDL3_ttf/SDL_ttf.h>
+#include <SDL3/SDL_rect.h>
+#include <SDL3/SDL_surface.h>
 
 #include <pixman.h>
 
@@ -251,7 +251,7 @@ struct BitmapPrivate
     surface(0),
     assumingRubyGC(false)
     {
-        format = SDL_AllocFormat(SDL_PIXELFORMAT_ABGR8888);
+        format = SDL_GetPixelFormatDetails(SDL_PIXELFORMAT_ABGR8888);
         
         animation.width = 0;
         animation.height = 0;
@@ -404,8 +404,8 @@ struct BitmapPrivate
         if (surf->format->format == format)
             return;
         
-        SDL_Surface *surfConv = SDL_ConvertSurfaceFormat(surf, format, 0);
-        SDL_FreeSurface(surf);
+        SDL_Surface *surfConv = SDL_ConvertSurface(surf, format, 0);
+        SDL_DestroySurface(surf);
         surf = surfConv;
     }
     
@@ -413,7 +413,7 @@ struct BitmapPrivate
     {
         if (surface && freeSurface)
         {
-            SDL_FreeSurface(surface);
+            SDL_DestroySurface(surface);
             surface = 0;
         }
         
@@ -437,7 +437,7 @@ struct BitmapOpenHandler : FileSystem::OpenHandler
     : surface(0), gif(0), gif_data(0), gif_data_size(0)
     {}
     
-    bool tryRead(SDL_RWops &ops, const char *ext)
+    bool tryRead(SDL_IOStream &ops, const char *ext)
     {
         if (IMG_isGIF(&ops)) {
             // Use libnsgif to initialise the gif data
@@ -457,7 +457,7 @@ struct BitmapOpenHandler : FileSystem::OpenHandler
             gif_data_size = ops.size(&ops);
             
             gif_data = new unsigned char[gif_data_size];
-            ops.seek(&ops, 0, RW_SEEK_SET);
+            ops.seek(&ops, 0, SDL_IO_SEEK_SET);
             ops.read(&ops, gif_data, gif_data_size, 1);
             
             int status;
@@ -699,7 +699,7 @@ Bitmap::Bitmap(void *pixeldata, int width, int height)
         }
         catch (const Exception &e)
         {
-            SDL_FreeSurface(surface);
+            SDL_DestroySurface(surface);
             throw e;
         }
         
@@ -709,7 +709,7 @@ Bitmap::Bitmap(void *pixeldata, int width, int height)
         TEX::bind(p->gl.tex);
         TEX::uploadImage(p->gl.width, p->gl.height, surface->pixels, GL_RGBA);
         
-        SDL_FreeSurface(surface);
+        SDL_DestroySurface(surface);
     }
     
     p->addTaintedArea(rect());
@@ -861,7 +861,7 @@ void Bitmap::initFromSurface(SDL_Surface *imgSurf, Bitmap *hiresBitmap, bool for
         {
             if (hiresBitmap)
                 delete hiresBitmap;
-            SDL_FreeSurface(imgSurf);
+            SDL_DestroySurface(imgSurf);
             throw e;
         }
         
@@ -875,7 +875,7 @@ void Bitmap::initFromSurface(SDL_Surface *imgSurf, Bitmap *hiresBitmap, bool for
         TEX::bind(p->gl.tex);
         TEX::uploadImage(p->gl.width, p->gl.height, imgSurf->pixels, GL_RGBA);
         
-        SDL_FreeSurface(imgSurf);
+        SDL_DestroySurface(imgSurf);
     }
     
     p->addTaintedArea(rect());
@@ -1130,7 +1130,7 @@ void Bitmap::stretchBlt(IntRect destRect,
                     else
                     {
                         SDL_Rect tmpRect = {0, 0, blitTemp->w, blitTemp->h};
-                        error = SDL_LowerBlitScaled(srcSurf, &srcRect, blitTemp, &tmpRect);
+                        error = SDL_BlitSurfaceUncheckedScaled(srcSurf, &srcRect, blitTemp, &tmpRect);
                     }
                     unpack_subimage = false;
                 }
@@ -1146,12 +1146,12 @@ void Bitmap::stretchBlt(IntRect destRect,
                                         SDL_GetError());
                     
                     SDL_Rect tmpRect = {0, 0, blitTemp->w, blitTemp->h};
-                    error = SDL_LowerBlit(srcSurf, &srcRect, blitTemp, &tmpRect);
+                    error = SDL_BlitSurfaceUnchecked(srcSurf, &srcRect, blitTemp, &tmpRect);
                 }
                 
                 if (error)
                 {
-                    SDL_FreeSurface(blitTemp);
+                    SDL_DestroySurface(blitTemp);
                     throw Exception(Exception::SDLError, "Failed to blit surface: %s", SDL_GetError());
                 }
                 
@@ -1310,7 +1310,7 @@ void Bitmap::stretchBlt(IntRect destRect,
     }
     
     if (blitTemp)
-        SDL_FreeSurface(blitTemp);
+        SDL_DestroySurface(blitTemp);
     
     p->addTaintedArea(destRect);
     p->onModified();
@@ -1850,7 +1850,7 @@ void Bitmap::saveToFile(const char *filename)
     }
     
     if (!p->surface && !p->megaSurface)
-        SDL_FreeSurface(surf);
+        SDL_DestroySurface(surf);
     
     if (rc) throw Exception(Exception::SDLError, "%s", SDL_GetError());
 }
@@ -2004,7 +2004,7 @@ static void applyShadow(SDL_Surface *&in, const SDL_PixelFormat &fm, const SDL_C
         }
     
     /* Store new surface in the input pointer */
-    SDL_FreeSurface(in);
+    SDL_DestroySurface(in);
     in = out;
 }
 
@@ -2091,7 +2091,7 @@ void Bitmap::drawText(const IntRect &rect, const char *str, int align)
         
         SDL_SetSurfaceBlendMode(txtSurf, SDL_BLENDMODE_BLEND);
         SDL_BlitSurface(txtSurf, NULL, outline, &outRect);
-        SDL_FreeSurface(txtSurf);
+        SDL_DestroySurface(txtSurf);
         txtSurf = outline;
         /* reset outline to 0 */
         TTF_SetFontOutline(font, 0);
@@ -2420,14 +2420,14 @@ int Bitmap::addFrame(Bitmap &source, int position)
         p->animation.frames.push_back(p->gl);
         
         if (p->surface)
-            SDL_FreeSurface(p->surface);
+            SDL_DestroySurface(p->surface);
         p->gl = TEXFBO();
     }
     
     if (source.surface()) {
         TEX::bind(newframe.tex);
         TEX::uploadImage(source.width(), source.height(), source.surface()->pixels, GL_RGBA);
-        SDL_FreeSurface(p->surface);
+        SDL_DestroySurface(p->surface);
         p->surface = 0;
     }
     else {
@@ -2626,7 +2626,7 @@ void Bitmap::releaseResources()
     }
 
     if (p->megaSurface)
-        SDL_FreeSurface(p->megaSurface);
+        SDL_DestroySurface(p->megaSurface);
     else if (p->animation.enabled) {
         p->animation.enabled = false;
         p->animation.playing = false;

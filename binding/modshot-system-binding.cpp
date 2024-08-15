@@ -11,7 +11,7 @@
 
 RB_METHOD(GetScreenResolution) {
 
-  int di = SDL_GetWindowDisplayIndex(shState->rtData().window);
+  int di = SDL_GetDisplayForWindow(shState->rtData().window);
   SDL_Rect rect;
   SDL_GetDisplayUsableBounds(di, &rect);
 

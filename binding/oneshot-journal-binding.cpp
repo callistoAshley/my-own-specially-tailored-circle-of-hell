@@ -6,7 +6,7 @@
 #include "journal_common.h"
 #include "sharedstate.h"
 
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 #include <cstring>
 #include <filesystem>
 #include <string>
@@ -15,7 +15,7 @@
 #include <zmq.hpp>
 
 static SDL_Thread *thread = NULL;
-static SDL_mutex *mutex = NULL;
+static SDL_Mutex *mutex = NULL;
 
 static zmq::context_t *zmq_ctx = NULL;
 static zmq::socket_t *pub_socket = NULL;

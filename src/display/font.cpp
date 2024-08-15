@@ -39,7 +39,7 @@
 #include "filesystem/filesystem.h"
 #endif
 
-#include <SDL_ttf.h>
+#include <SDL3_ttf/SDL_ttf.h>
 
 #ifndef MKXPZ_BUILD_XCODE
 #ifndef MKXPZ_CJK_FONT
@@ -70,12 +70,12 @@ BUNDLED_FONT_DECL(terminus)
 
 #endif
 
-static SDL_RWops *openBundledFont()
+static SDL_IOStream *openBundledFont()
 {
 #ifndef MKXPZ_BUILD_XCODE
-    return SDL_RWFromConstMem(BNDL_F_D(BUNDLED_FONT), BNDL_F_L(BUNDLED_FONT));
+    return SDL_IOFromConstMem(BNDL_F_D(BUNDLED_FONT), BNDL_F_L(BUNDLED_FONT));
 #else
-    return SDL_RWFromFile(mkxp_fs::getPathForAsset("Fonts/terminus", "ttf").c_str(), "rb");
+    return SDL_IOFromFile(mkxp_fs::getPathForAsset("Fonts/terminus", "ttf").c_str(), "rb");
 #endif
 }
 
@@ -138,7 +138,7 @@ SharedFontState::~SharedFontState()
 	delete p;
 }
 
-void SharedFontState::initFontSetCB(SDL_RWops &ops,
+void SharedFontState::initFontSetCB(SDL_IOStream &ops,
                                     const std::string &filename)
 {
 	TTF_Font *font = TTF_OpenFontRW(&ops, 0, 0);
@@ -192,7 +192,7 @@ _TTF_Font *SharedFontState::getFont(std::string family,
 		return font;
 
 	/* Not in pool; open new handle */
-	SDL_RWops *ops;
+	SDL_IOStream *ops;
 
 	if (family.empty())
 	{
@@ -239,7 +239,7 @@ bool SharedFontState::fontPresent(std::string family) const
 
 _TTF_Font *SharedFontState::openBundled(int size)
 {
-	SDL_RWops *ops = openBundledFont();
+	SDL_IOStream *ops = openBundledFont();
 
 	return TTF_OpenFontRW(ops, 1, size);
 }

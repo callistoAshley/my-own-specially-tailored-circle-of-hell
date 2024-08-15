@@ -48,12 +48,12 @@
 #include "input.h"
 #include "sprite.h"
 
-#include <SDL.h>
-#include <SDL_image.h>
-#include <SDL_timer.h>
-#include <SDL_video.h>
-#include <SDL_mutex.h>
-#include <SDL_thread.h>
+#include <SDL3/SDL.h>
+#include <SDL3_image/SDL_image.h>
+#include <SDL3/SDL_timer.h>
+#include <SDL3/SDL_video.h>
+#include <SDL3/SDL_Mutex.h>
+#include <SDL3/SDL_thread.h>
 
 #ifdef MKXPZ_STEAM
 #include "steamshim_child.h"
@@ -92,15 +92,15 @@ typedef struct AudioQueue
 
 static long readMovie(THEORAPLAY_Io *io, void *buf, long buflen)
 {
-    SDL_RWops *f = (SDL_RWops *) io->userdata;
-    return (long) SDL_RWread(f, buf, 1, buflen);
+    SDL_IOStream *f = (SDL_IOStream *) io->userdata;
+    return (long) SDL_ReadIO(f, buf, 1, buflen);
 } // IoFopenRead
 
 
 static void closeMovie(THEORAPLAY_Io *io)
 {
-    SDL_RWops *f = (SDL_RWops *) io->userdata;
-    SDL_RWclose(f);
+    SDL_IOStream *f = (SDL_IOStream *) io->userdata;
+    SDL_CloseIO(f);
     free(io);
 } // IoFopenClose
 
@@ -112,7 +112,7 @@ struct Movie
     bool hasVideo;
     bool skippable;
     Bitmap *videoBitmap;
-    SDL_RWops srcOps;
+    SDL_IOStream srcOps;
     #ifndef MKXPZ_NO_OPENAL
     bool hasAudio;
     SDL_Thread *audioThread;
@@ -124,7 +124,7 @@ struct Movie
     ALuint alBuffers[STREAM_BUFS];
     ALshort audioBuffer[MOVIE_AUDIO_BUFFER_SIZE];
     #endif
-    SDL_mutex *audioMutex;
+    SDL_Mutex *audioMutex;
     
     Movie(bool skippable_)
     :   decoder(0), 
@@ -144,7 +144,7 @@ struct Movie
         // https://ffmpeg.org/doxygen/0.11/group__lavc__misc__pixfmt.html
         THEORAPLAY_Io *io = (THEORAPLAY_Io *) malloc(sizeof (THEORAPLAY_Io));
         if(!io) {
-            SDL_RWclose(&srcOps);
+            SDL_CloseIO(&srcOps);
             return false;
         }
         
@@ -153,7 +153,7 @@ struct Movie
         io->userdata = &srcOps;
         decoder = THEORAPLAY_startDecode(io, DEF_MAX_VIDEO_FRAMES, THEORAPLAY_VIDFMT_RGBA);
         if (!decoder) {
-            SDL_RWclose(&srcOps);
+            SDL_CloseIO(&srcOps);
             return false;
         }
         
@@ -452,13 +452,13 @@ struct Movie
 
 struct MovieOpenHandler : FileSystem::OpenHandler
 {
-    SDL_RWops *srcOps;
+    SDL_IOStream *srcOps;
     
-    MovieOpenHandler(SDL_RWops &srcOps)
+    MovieOpenHandler(SDL_IOStream &srcOps)
     :   srcOps(&srcOps)
     {}
     
-    bool tryRead(SDL_RWops &ops, const char *ext)
+    bool tryRead(SDL_IOStream &ops, const char *ext)
     {
         *srcOps = ops;
         return true;
@@ -953,9 +953,9 @@ struct GraphicsPrivate {
     
     std::vector<double> avgFPSData;
     double last_avg_update;
-    SDL_mutex *avgFPSLock;
+    SDL_Mutex *avgFPSLock;
     
-    SDL_mutex *glResourceLock;
+    SDL_Mutex *glResourceLock;
     bool multithreadedMode;
     
     /* Global list of all live Disposables
@@ -1627,13 +1627,13 @@ int Graphics::displayContentHeight() const {
 
 int Graphics::displayWidth() const {
     SDL_DisplayMode dm{};
-    SDL_GetCurrentDisplayMode(SDL_GetWindowDisplayIndex(shState->sdlWindow()), &dm);
+    SDL_GetCurrentDisplayMode(SDL_GetDisplayForWindow(shState->sdlWindow()), &dm);
     return dm.w / p->backingScaleFactor;
 }
 
 int Graphics::displayHeight() const {
     SDL_DisplayMode dm{};
-    SDL_GetCurrentDisplayMode(SDL_GetWindowDisplayIndex(shState->sdlWindow()), &dm);
+    SDL_GetCurrentDisplayMode(SDL_GetDisplayForWindow(shState->sdlWindow()), &dm);
     return dm.h / p->backingScaleFactor;
 }
 

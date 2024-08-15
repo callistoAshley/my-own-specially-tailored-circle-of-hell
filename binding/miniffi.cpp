@@ -1,7 +1,7 @@
 #include "miniffi.h"
 #include <assert.h>
 
-#if defined(__MINGW64__) || defined(__linux__) || defined(__APPLE__)
+#if defined(__MINGW64__) || defined(__linux__) || defined(SDL_PLATFORM_APPLE)
 mffi_value miniffi_call_intern(MINIFFI_FUNC target, MiniFFIFuncArgs *p, int nparams) {
     assert(nparams <= MINIFFI_MAX_ARGS);
     // Be sure to add more args to the below line if MINIFFI_MAX_ARGS is bumped

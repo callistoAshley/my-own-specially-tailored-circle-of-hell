@@ -516,7 +516,7 @@ struct WindowVXPrivate
 
 		SDL_Rect tmp = padRect;
 
-		SDL_IntersectRect(&winRect, &tmp, &tmp);
+		SDL_GetRectIntersection(&winRect, &tmp, &tmp);
 		clipRect = IntRect(tmp.x, tmp.y, tmp.w, tmp.h);
 
 		ctrlVertDirty = true;

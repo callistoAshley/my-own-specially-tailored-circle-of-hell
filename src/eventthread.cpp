@@ -20,14 +20,14 @@
  */
 
 #include "eventthread.h"
-#include "SDL_video.h"
+#include <SDL3/SDL_video.h>
 
-#include <SDL_events.h>
-#include <SDL_messagebox.h>
-#include <SDL_timer.h>
-#include <SDL_thread.h>
-#include <SDL_touch.h>
-#include <SDL_rect.h>
+#include <SDL3/SDL_events.h>
+#include <SDL3/SDL_messagebox.h>
+#include <SDL3/SDL_timer.h>
+#include <SDL3/SDL_thread.h>
+#include <SDL3/SDL_touch.h>
+#include <SDL3/SDL_rect.h>
 
 #ifndef MKXPZ_NO_OPENAL
 #include <al.h>
@@ -53,7 +53,7 @@
 #endif
 #include "debugwriter.h"
 
-#ifndef __APPLE__
+#ifndef SDL_PLATFORM_APPLE
 #include "util/string-util.h"
 #endif
 
@@ -94,7 +94,7 @@ uint8_t EventThread::keyStates[];
 EventThread::ControllerState EventThread::controllerState;
 EventThread::MouseState EventThread::mouseState;
 EventThread::TouchState EventThread::touchState;
-SDL_atomic_t EventThread::verticalScrollDistance;
+SDL_AtomicInt EventThread::verticalScrollDistance;
 
 /* User event codes */
 enum
@@ -171,12 +171,12 @@ void EventThread::process(RGSSThreadData &rtData)
     #endif
     
     // XXX this function breaks input focus on OSX
-#ifndef __APPLE__
+#ifndef SDL_PLATFORM_APPLE
     SDL_SetEventFilter(eventFilter, &rtData);
 #endif
     
     fullscreen = rtData.config.fullscreen;
-    int toggleFSMod = rtData.config.anyAltToggleFS ? KMOD_ALT : KMOD_LALT;
+    int toggleFSMod = rtData.config.anyAltToggleFS ? SDL_KMOD_ALT : SDL_KMOD_LALT;
     
     bool displayingFPS = rtData.config.displayFPS;
     
@@ -193,16 +193,16 @@ void EventThread::process(RGSSThreadData &rtData)
     bool terminate = false;
     
 #ifdef MKXPZ_BUILD_XCODE
-    SDL_GameControllerAddMappingsFromFile(mkxp_fs::getPathForAsset("gamecontrollerdb", "txt").c_str());
+    SDL_AddGamepadMappingsFromFile(mkxp_fs::getPathForAsset("gamecontrollerdb", "txt").c_str());
 #else
-    SDL_GameControllerAddMappingsFromRW(
-        SDL_RWFromConstMem(___assets_gamecontrollerdb_txt, ___assets_gamecontrollerdb_txt_len),
+    SDL_AddGamepadMappingsFromIO(
+        SDL_IOFromConstMem(___assets_gamecontrollerdb_txt, ___assets_gamecontrollerdb_txt_len),
     1);
 #endif
     
-    SDL_JoystickUpdate();
-    if (SDL_NumJoysticks() > 0 && SDL_IsGameController(0)) {
-            ctrl = SDL_GameControllerOpen(0);
+    SDL_UpdateJoysticks();
+    if (SDL_NumJoysticks() > 0 && SDL_IsGamepad(0)) {
+            ctrl = SDL_OpenGamepad(0);
     }
     
     char buffer[128];
@@ -256,16 +256,16 @@ void EventThread::process(RGSSThreadData &rtData)
         /* Preselect and discard unwanted events here */
         switch (event.type)
         {
-            case SDL_MOUSEBUTTONDOWN :
-            case SDL_MOUSEBUTTONUP :
-            case SDL_MOUSEMOTION :
+            case SDL_EVENT_MOUSE_BUTTON_DOWN :
+            case SDL_EVENT_MOUSE_BUTTON_UP :
+            case SDL_EVENT_MOUSE_MOTION :
                 if (event.button.which == SDL_TOUCH_MOUSEID)
                     continue;
                 break;
                 
-            case SDL_FINGERDOWN :
-            case SDL_FINGERUP :
-            case SDL_FINGERMOTION :
+            case SDL_EVENT_FINGER_DOWN :
+            case SDL_EVENT_FINGER_UP :
+            case SDL_EVENT_FINGER_MOTION :
                 if (event.tfinger.fingerId >= MAX_FINGERS)
                     continue;
                 break;
@@ -277,7 +277,7 @@ void EventThread::process(RGSSThreadData &rtData)
             case SDL_WINDOWEVENT :
                 switch (event.window.event)
                 {
-                    case SDL_WINDOWEVENT_SIZE_CHANGED :
+                    case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED :
                         winW = event.window.data1;
                         winH = event.window.data2;
                         
@@ -289,21 +289,21 @@ void EventThread::process(RGSSThreadData &rtData)
                         resetInputStates();
                         break;
                         
-                    case SDL_WINDOWEVENT_ENTER :
+                    case SDL_EVENT_WINDOW_MOUSE_ENTER :
                         cursorInWindow = true;
                         mouseState.inWindow = true;
                         updateCursorState(cursorInWindow && windowFocused && !sMenu, gameScreen);
                         
                         break;
                         
-                    case SDL_WINDOWEVENT_LEAVE :
+                    case SDL_EVENT_WINDOW_MOUSE_LEAVE :
                         cursorInWindow = false;
                         mouseState.inWindow = false;
                         updateCursorState(cursorInWindow && windowFocused && !sMenu, gameScreen);
                         
                         break;
                         
-                    case SDL_WINDOWEVENT_CLOSE :
+                    case SDL_EVENT_WINDOW_CLOSE_REQUESTED :
                         if (rtData.allowExit) {
                             terminate = true;
                         } else {
@@ -312,13 +312,13 @@ void EventThread::process(RGSSThreadData &rtData)
                         
                         break;
                         
-                    case SDL_WINDOWEVENT_FOCUS_GAINED :
+                    case SDL_EVENT_WINDOW_FOCUS_GAINED :
                         windowFocused = true;
                         updateCursorState(cursorInWindow && windowFocused && !sMenu, gameScreen);
                         
                         break;
                         
-                    case SDL_WINDOWEVENT_FOCUS_LOST :
+                    case SDL_EVENT_WINDOW_FOCUS_LOST :
                         windowFocused = false;
                         updateCursorState(cursorInWindow && windowFocused && !sMenu, gameScreen);
                         resetInputStates();
@@ -327,7 +327,7 @@ void EventThread::process(RGSSThreadData &rtData)
                 }
                 break;
                 
-            case SDL_TEXTINPUT :
+            case SDL_EVENT_TEXT_INPUT :
                 lockText(true);
                 if (textInputBuffer.size() < 512 && acceptingTextInput) {
                     textInputBuffer += event.text.text;
@@ -335,7 +335,7 @@ void EventThread::process(RGSSThreadData &rtData)
                 lockText(false);
                 break;
                 
-            case SDL_QUIT :
+            case SDL_EVENT_QUIT :
                 if (rtData.allowExit) {
                     terminate = true;
                     Debug() << "EventThread termination requested";
@@ -345,7 +345,7 @@ void EventThread::process(RGSSThreadData &rtData)
                 
                 break;
                 
-            case SDL_KEYDOWN :
+            case SDL_EVENT_KEY_DOWN :
                 if (event.key.keysym.scancode == SDL_SCANCODE_RETURN &&
                     (event.key.keysym.mod & toggleFSMod))
                 {
@@ -442,7 +442,7 @@ void EventThread::process(RGSSThreadData &rtData)
                 keyStates[event.key.keysym.scancode] = true;
                 break;
                 
-            case SDL_KEYUP :
+            case SDL_EVENT_KEY_UP :
                 if (event.key.keysym.scancode == SDL_SCANCODE_F12)
                 {
                     if (!rtData.config.enableReset)
@@ -456,60 +456,60 @@ void EventThread::process(RGSSThreadData &rtData)
                 keyStates[event.key.keysym.scancode] = false;
                 break;
                 
-            case SDL_CONTROLLERBUTTONDOWN:
+            case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
                 controllerState.buttons[event.cbutton.button] = true;
                 break;
                 
-            case SDL_CONTROLLERBUTTONUP:
+            case SDL_EVENT_GAMEPAD_BUTTON_UP:
                 controllerState.buttons[event.cbutton.button] = false;
                 break;
                 
-            case SDL_CONTROLLERAXISMOTION:
+            case SDL_EVENT_GAMEPAD_AXIS_MOTION:
                 controllerState.axes[event.caxis.axis] = event.caxis.value;
                 break;
                 
-            case SDL_CONTROLLERDEVICEADDED:
+            case SDL_EVENT_GAMEPAD_ADDED:
                 if (event.cdevice.which > 0)
                     break;
                 
-                ctrl = SDL_GameControllerOpen(0);
+                ctrl = SDL_OpenGamepad(0);
                 break;
                 
-            case SDL_CONTROLLERDEVICEREMOVED:
+            case SDL_EVENT_GAMEPAD_REMOVED:
                 resetInputStates();
                 ctrl = 0;
                 break;
                 
-            case SDL_MOUSEBUTTONDOWN :
+            case SDL_EVENT_MOUSE_BUTTON_DOWN :
                 mouseState.buttons[event.button.button] = true;
                 break;
                 
-            case SDL_MOUSEBUTTONUP :
+            case SDL_EVENT_MOUSE_BUTTON_UP :
                 mouseState.buttons[event.button.button] = false;
                 break;
                 
-            case SDL_MOUSEMOTION :
+            case SDL_EVENT_MOUSE_MOTION :
                 mouseState.x = event.motion.x;
                 mouseState.y = event.motion.y;
                 cursorTimer();
                 updateCursorState(cursorInWindow, gameScreen);
                 break;
                 
-            case SDL_MOUSEWHEEL :
+            case SDL_EVENT_MOUSE_WHEEL :
                 /* Only consider vertical scrolling for now */
                 SDL_AtomicAdd(&verticalScrollDistance, event.wheel.y);
                 
-            case SDL_FINGERDOWN :
+            case SDL_EVENT_FINGER_DOWN :
                 i = event.tfinger.fingerId;
                 touchState.fingers[i].down = true;
                 
-            case SDL_FINGERMOTION :
+            case SDL_EVENT_FINGER_MOTION :
                 i = event.tfinger.fingerId;
                 touchState.fingers[i].x = event.tfinger.x * winW;
                 touchState.fingers[i].y = event.tfinger.y * winH;
                 break;
                 
-            case SDL_FINGERUP :
+            case SDL_EVENT_FINGER_UP :
                 i = event.tfinger.fingerId;
                 memset(&touchState.fingers[i], 0, sizeof(touchState.fingers[0]));
                 break;
@@ -533,9 +533,9 @@ void EventThread::process(RGSSThreadData &rtData)
                         break;
                         
                     case REQUEST_WINCENTER : {
-                            rc = SDL_GetDesktopDisplayMode(SDL_GetWindowDisplayIndex(win), &dm);
+                            rc = SDL_GetDesktopDisplayMode(SDL_GetDisplayForWindow(win), &dm);
                             SDL_Rect rect;
-                            SDL_GetDisplayUsableBounds(SDL_GetWindowDisplayIndex(win), &rect);
+                            SDL_GetDisplayUsableBounds(SDL_GetDisplayForWindow(win), &rect);
                             if (!rc)
                                 SDL_SetWindowPosition(win,
                                                     rect.x + (dm.w / 2) - (winW / 2),
@@ -564,7 +564,7 @@ void EventThread::process(RGSSThreadData &rtData)
                         
                     case REQUEST_MESSAGEBOX :
                     {
-#ifndef __APPLE__
+#ifndef SDL_PLATFORM_APPLE
                         // Try to format the message with additional newlines
                         std::string message = copyWithNewlines((const char*) event.user.data1,
                                                                70);
@@ -654,8 +654,8 @@ void EventThread::process(RGSSThreadData &rtData)
     /* Just in case */
     rtData.syncPoint.resumeThreads();
     
-    if (SDL_GameControllerGetAttached(ctrl))
-        SDL_GameControllerClose(ctrl);
+    if (SDL_GamepadConnected(ctrl))
+        SDL_CloseGamepad(ctrl);
     
 #ifndef MKXPZ_BUILD_XCODE
     delete sMenu;
@@ -668,8 +668,8 @@ int EventThread::eventFilter(void *data, SDL_Event *event)
     
     switch (event->type)
     {
-        case SDL_APP_WILLENTERBACKGROUND :
-            Debug() << "SDL_APP_WILLENTERBACKGROUND";
+        case SDL_EVENT_WILL_ENTER_BACKGROUND :
+            Debug() << "SDL_EVENT_WILL_ENTER_BACKGROUND";
             
             #ifndef MKXPZ_NO_OPENAL
             if (HAVE_ALC_DEVICE_PAUSE)
@@ -680,16 +680,16 @@ int EventThread::eventFilter(void *data, SDL_Event *event)
             
             return 0;
             
-        case SDL_APP_DIDENTERBACKGROUND :
-            Debug() << "SDL_APP_DIDENTERBACKGROUND";
+        case SDL_EVENT_DID_ENTER_BACKGROUND :
+            Debug() << "SDL_EVENT_DID_ENTER_BACKGROUND";
             return 0;
             
-        case SDL_APP_WILLENTERFOREGROUND :
-            Debug() << "SDL_APP_WILLENTERFOREGROUND";
+        case SDL_EVENT_WILL_ENTER_FOREGROUND :
+            Debug() << "SDL_EVENT_WILL_ENTER_FOREGROUND";
             return 0;
             
-        case SDL_APP_DIDENTERFOREGROUND :
-            Debug() << "SDL_APP_DIDENTERFOREGROUND";
+        case SDL_EVENT_DID_ENTER_FOREGROUND :
+            Debug() << "SDL_EVENT_DID_ENTER_FOREGROUND";
             
             #ifndef MKXPZ_NO_OPENAL
             if (HAVE_ALC_DEVICE_PAUSE)
@@ -700,12 +700,12 @@ int EventThread::eventFilter(void *data, SDL_Event *event)
             
             return 0;
             
-        case SDL_APP_TERMINATING :
-            Debug() << "SDL_APP_TERMINATING";
+        case SDL_EVENT_TERMINATING :
+            Debug() << "SDL_EVENT_TERMINATING";
             return 0;
             
-        case SDL_APP_LOWMEMORY :
-            Debug() << "SDL_APP_LOWMEMORY";
+        case SDL_EVENT_LOW_MEMORY :
+            Debug() << "SDL_EVENT_LOW_MEMORY";
             return 0;
         /* Workaround for Windows pausing on drag */
         case SDL_WINDOWEVENT:
@@ -715,7 +715,7 @@ int EventThread::eventFilter(void *data, SDL_Event *event)
                     return 0;
             }
 
-            if (event->window.event == SDL_WINDOWEVENT_MOVED)
+            if (event->window.event == SDL_EVENT_WINDOW_MOVED)
             {
                 if (shState != NULL && shState->rgssVersion > 0)
                 {
@@ -726,12 +726,12 @@ int EventThread::eventFilter(void *data, SDL_Event *event)
             }
             return 1;
             
-            //	case SDL_RENDER_TARGETS_RESET :
-            //		Debug() << "****** SDL_RENDER_TARGETS_RESET";
+            //	case SDL_EVENT_RENDER_TARGETS_RESET :
+            //		Debug() << "****** SDL_EVENT_RENDER_TARGETS_RESET";
             //		return 0;
             
-            //	case SDL_RENDER_DEVICE_RESET :
-            //		Debug() << "****** SDL_RENDER_DEVICE_RESET";
+            //	case SDL_EVENT_RENDER_DEVICE_RESET :
+            //		Debug() << "****** SDL_EVENT_RENDER_DEVICE_RESET";
             //		return 0;
     }
     
@@ -777,7 +777,7 @@ void EventThread::updateCursorState(bool inWindow,
 void EventThread::requestTerminate()
 {
     SDL_Event event;
-    event.type = SDL_QUIT;
+    event.type = SDL_EVENT_QUIT;
     SDL_PushEvent(&event);
 }
 
@@ -906,7 +906,7 @@ bool EventThread::getControllerConnected() const
     return ctrl != 0;
 }
 
-SDL_GameController *EventThread::controller() const
+SDL_Gamepad *EventThread::controller() const
 {
     return ctrl;
 }
@@ -998,12 +998,12 @@ void SyncPoint::passSecondarySync()
 SyncPoint::Util::Util()
 {
     mut = SDL_CreateMutex();
-    cond = SDL_CreateCond();
+    cond = SDL_CreateCondition();
 }
 
 SyncPoint::Util::~Util()
 {
-    SDL_DestroyCond(cond);
+    SDL_DestroyCondition(cond);
     SDL_DestroyMutex(mut);
 }
 
@@ -1017,9 +1017,9 @@ void SyncPoint::Util::unlock(bool multi)
     locked.clear();
     
     if (multi)
-        SDL_CondBroadcast(cond);
+        SDL_BroadcastCondition(cond);
     else
-        SDL_CondSignal(cond);
+        SDL_SignalCondition(cond);
 }
 
 void SyncPoint::Util::waitForUnlock()
@@ -1027,7 +1027,7 @@ void SyncPoint::Util::waitForUnlock()
     SDL_LockMutex(mut);
     
     while (locked)
-        SDL_CondWait(cond, mut);
+        SDL_WaitCondition(cond, mut);
     
     SDL_UnlockMutex(mut);
 }

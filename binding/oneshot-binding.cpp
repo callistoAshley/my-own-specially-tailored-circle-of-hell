@@ -1,6 +1,6 @@
 #include <boost/crc.hpp>
 
-#include "SDL_video.h"
+#include <SDL3/SDL_video.h>
 #include "binding-types.h"
 #include "binding-util.h"
 #include "etc.h"
@@ -9,7 +9,7 @@
 #include "ruby/internal/special_consts.h"
 #include "sharedstate.h"
 
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 
 RB_METHOD(oneshotSetYesNo) {
   RB_UNUSED_PARAM;

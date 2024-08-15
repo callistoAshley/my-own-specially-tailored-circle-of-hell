@@ -1,4 +1,4 @@
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 #include "etc-internal.h"
 #include "eventthread.h"
 #include "gl-fun.h"
@@ -340,7 +340,7 @@ RB_METHOD(monitorWindowInit) {
   int h = NUM2INT(vh);
 
   const char* name = " ";
-  unsigned int flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SKIP_TASKBAR | SDL_WINDOW_BORDERLESS | SDL_WINDOW_TRANSPARENT;
+  unsigned int flags = SDL_WINDOW_OPENGL | SDL_WINDOW_UTILITY | SDL_WINDOW_BORDERLESS | SDL_WINDOW_TRANSPARENT;
   if (!NIL_P(kwargs)) {
     ID table[7] = {
       rb_intern("borderless"),
@@ -364,7 +364,7 @@ RB_METHOD(monitorWindowInit) {
     if (RTEST(values[3]) && values[3] != Qundef)
       flags |= SDL_WINDOW_FULLSCREEN; // not fullscreen by default
     if (!RTEST(values[4]) && values[4] != Qundef)
-      flags &= ~SDL_WINDOW_SKIP_TASKBAR; // skipped by default
+      flags &= ~SDL_WINDOW_UTILITY; // skipped by default
     if (!RTEST(values[5]) && values[5] != Qundef)
       flags &= ~SDL_WINDOW_TRANSPARENT; // not transparent by default
     if (values[6] != Qundef)

@@ -9,9 +9,9 @@
 #include "bitmap.h"
 #include "font.h"
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
-#include <SDL2/SDL_ttf.h>
+#include <SDL3/SDL.h>
+#include <SDL3_image/SDL_image.h>
+#include <SDL3_ttf/SDL_ttf.h>
 
 // OS-Specific code
 #if defined _WIN32
@@ -22,14 +22,14 @@
 	#include <mmsystem.h>
 	#include <security.h>
 	#include <shlobj.h>
-	#include <SDL2/SDL_syswm.h>
-#elif defined __APPLE__ || __linux__
+	#include <SDL3/SDL_syswm.h>
+#elif defined SDL_PLATFORM_APPLE || __linux__
 	#include <stdlib.h>
 	#include <unistd.h>
 	#include <pwd.h>
 	#include <dlfcn.h>
 
-	#ifdef __APPLE__
+	#ifdef SDL_PLATFORM_APPLE
 		#define OS_OSX
 		#include <dispatch/dispatch.h>
 	#else
@@ -69,7 +69,7 @@ struct OneshotPrivate
 
 	// Alpha texture data for portions of window obscured by screen edges
 	int winX, winY;
-	SDL_mutex *winMutex;
+	SDL_Mutex *winMutex;
 	bool winPosChanged;
 	std::vector<uint8_t> obscuredMap;
 	bool obscuredCleared;
@@ -354,7 +354,7 @@ void Oneshot::update()
 
 			//Get intersection of window and the screen
 			SDL_Rect intersect;
-			if (!SDL_IntersectRect(&screenRect, &bounds, &intersect))
+			if (!SDL_GetRectIntersection(&screenRect, &bounds, &intersect))
 				continue;
 			intersect.x -= screenRect.x;
 			intersect.y -= screenRect.y;

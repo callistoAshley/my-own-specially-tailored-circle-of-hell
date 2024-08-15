@@ -1,9 +1,9 @@
 #ifndef SDLUTIL_H
 #define SDLUTIL_H
 
-#include <SDL_atomic.h>
-#include <SDL_thread.h>
-#include <SDL_rwops.h>
+#include <SDL3/SDL_atomic.h>
+#include <SDL3/SDL_thread.h>
+#include <SDL3/SDL_rwops.h>
 
 #include <string>
 #include <iostream>
@@ -43,7 +43,7 @@ struct AtomicFlag
 	}
 
 private:
-	mutable SDL_atomic_t atom;
+	mutable SDL_AtomicInt atom;
 };
 
 template<class C, void (C::*func)()>
@@ -59,18 +59,18 @@ SDL_Thread *createSDLThread(C *obj, const std::string &name = std::string())
 	return SDL_CreateThread((__sdlThreadFun<C, func>), name.c_str(), obj);
 }
 
-/* On Android, SDL_RWFromFile always opens files from inside
+/* On Android, SDL_IOFromFile always opens files from inside
  * the apk asset folder even when a file with same name exists
  * on the physical filesystem. This wrapper attempts to open a
  * real file first before falling back to the assets folder */
 static inline
-SDL_RWops *RWFromFile(const char *filename,
+SDL_IOStream *RWFromFile(const char *filename,
                       const char *mode)
 {
 	FILE *f = fopen(filename, mode);
 
 	if (!f)
-		return SDL_RWFromFile(filename, mode);
+		return SDL_IOFromFile(filename, mode);
 
 	return SDL_RWFromFP(f, SDL_TRUE);
 }
@@ -78,17 +78,17 @@ SDL_RWops *RWFromFile(const char *filename,
 inline bool readFileSDL(const char *path,
                         std::string &out)
 {
-	SDL_RWops *f = RWFromFile(path, "rb");
+	SDL_IOStream *f = RWFromFile(path, "rb");
 
 	if (!f)
 		return false;
 
-	long size = SDL_RWsize(f);
+	long size = SDL_GetIOSize(f);
 	size_t back = out.size();
 
 	out.resize(back+size);
-	size_t read = SDL_RWread(f, &out[back], 1, size);
-	SDL_RWclose(f);
+	size_t read = SDL_ReadIO(f, &out[back], 1, size);
+	SDL_CloseIO(f);
 
 	if (read != (size_t) size)
 		out.resize(back+read);
@@ -100,7 +100,7 @@ template<size_t bufSize = 248, size_t pbSize = 8>
 class SDLRWBuf : public std::streambuf
 {
 public:
-	SDLRWBuf(SDL_RWops *ops)
+	SDLRWBuf(SDL_IOStream *ops)
 	    : ops(ops)
 	{
 		char *end = buf + bufSize + pbSize;
@@ -125,7 +125,7 @@ private:
 			start += pbSize;
 		}
 
-		size_t n = SDL_RWread(ops, start, 1, bufSize - (start - base));
+		size_t n = SDL_ReadIO(ops, start, 1, bufSize - (start - base));
 		if (n == 0)
 			return traits_type::eof();
 
@@ -134,7 +134,7 @@ private:
 		return underflow();
 	}
 
-	SDL_RWops *ops;
+	SDL_IOStream *ops;
 	char buf[bufSize+pbSize];
 };
 
@@ -151,7 +151,7 @@ public:
 	~SDLRWStream()
 	{
 		if (ops)
-			SDL_RWclose(ops);
+			SDL_CloseIO(ops);
 	}
 
 	operator bool() const
@@ -165,7 +165,7 @@ public:
 	}
 
 private:
-	SDL_RWops *ops;
+	SDL_IOStream *ops;
 	SDLRWBuf<> buf;
 	std::istream s;
 };

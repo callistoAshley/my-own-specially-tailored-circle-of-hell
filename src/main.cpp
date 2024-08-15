@@ -27,12 +27,12 @@
 #include <alc.h>
 #endif
 
-#include <SDL.h>
-#include <SDL_image.h>
+#include <SDL3/SDL.h>
+#include <SDL3_image/SDL_image.h>
 #ifndef MKXPZ_NO_OPENAL
-#include <SDL_sound.h>
+#include <SDL3/SDL_sound.h>
 #endif
-#include <SDL_ttf.h>
+#include <SDL3_ttf/SDL_ttf.h>
 
 #include <assert.h>
 #include <string.h>
@@ -52,7 +52,7 @@
 
 #include "system/system.h"
 
-#if defined(__WIN32__)
+#if defined(SDL_PLATFORM_WIN32)
 #include "resource.h"
 #include <Winsock2.h>
 #include "util/win-consoleutils.h"
@@ -192,22 +192,22 @@ static void showInitError(const std::string &msg) {
 }
 
 static void setupWindowIcon(const Config &conf, SDL_Window *win) {
-  SDL_RWops *iconSrc;
+  SDL_IOStream *iconSrc;
 
   if (conf.iconPath.empty())
 #ifndef MKXPZ_BUILD_XCODE
-    iconSrc = SDL_RWFromConstMem(___assets_icon_png, ___assets_icon_png_len);
+    iconSrc = SDL_IOFromConstMem(___assets_icon_png, ___assets_icon_png_len);
 #else
-    iconSrc = SDL_RWFromFile(mkxp_fs::getPathForAsset("icon", "png").c_str(), "rb");
+    iconSrc = SDL_IOFromFile(mkxp_fs::getPathForAsset("icon", "png").c_str(), "rb");
 #endif
   else
-    iconSrc = SDL_RWFromFile(conf.iconPath.c_str(), "rb");
+    iconSrc = SDL_IOFromFile(conf.iconPath.c_str(), "rb");
 
   SDL_Surface *iconImg = IMG_Load_RW(iconSrc, SDL_TRUE);
 
   if (iconImg) {
     SDL_SetWindowIcon(win, iconImg);
-    SDL_FreeSurface(iconImg);
+    SDL_DestroySurface(iconImg);
   }
 }
 
@@ -220,7 +220,7 @@ int main(int argc, char *argv[]) {
 #endif
 
     /* initialize SDL first */
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER | SDL_INIT_TIMER) < 0) {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD | SDL_INIT_TIMER) < 0) {
       showInitError(std::string("Error initializing SDL: ") + SDL_GetError());
       return 0;
     }
@@ -249,7 +249,7 @@ int main(int argc, char *argv[]) {
     Config conf;
     conf.read(argc, argv);
 
-#if defined(__WIN32__)
+#if defined(SDL_PLATFORM_WIN32)
     // Create a debug console in debug mode
     if (conf.winConsole) {
       if (setupWindowsConsole()) {
@@ -319,7 +319,7 @@ int main(int argc, char *argv[]) {
       return 0;
     }
 #endif
-#if defined(__WIN32__)
+#if defined(SDL_PLATFORM_WIN32)
     WSAData wsadata = {0};
     if (WSAStartup(0x101, &wsadata) || wsadata.wVersion != 0x101) {
       char buf[200];
@@ -331,7 +331,7 @@ int main(int argc, char *argv[]) {
 #endif
 
     SDL_Window *win;
-    Uint32 winFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_ALLOW_HIGHDPI;
+    Uint32 winFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_HIGH_PIXEL_DENSITY;
 
     if (conf.winResizable)
       winFlags |= SDL_WINDOW_RESIZABLE;
@@ -398,7 +398,7 @@ int main(int argc, char *argv[]) {
 
     /* OSX and Windows have their own native ways of
      * dealing with icons; don't interfere with them */
-#ifdef __LINUX__
+#ifdef SDL_PLATFORM_LINUX
     setupWindowIcon(conf, win);
 #else
     (void)setupWindowIcon;
@@ -502,7 +502,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (rtData.glContext)
-      SDL_GL_DeleteContext(rtData.glContext);
+      SDL_GL_DestroyContext(rtData.glContext);
 
     /* Clean up any remainin events */
     eventThread.cleanup();
@@ -514,7 +514,7 @@ int main(int argc, char *argv[]) {
     #endif
     SDL_DestroyWindow(win);
 
-#if defined(__WIN32__)
+#if defined(SDL_PLATFORM_WIN32)
     if (wsadata.wVersion)
       WSACleanup();
 #endif
@@ -558,7 +558,7 @@ static SDL_GLContext initGL(SDL_Window *win, Config &conf,
     initGLFunctions();
   } catch (const Exception &exc) {
     GLINIT_SHOWERROR(exc.msg);
-    SDL_GL_DeleteContext(glCtx);
+    SDL_GL_DestroyContext(glCtx);
 
     return 0;
   }

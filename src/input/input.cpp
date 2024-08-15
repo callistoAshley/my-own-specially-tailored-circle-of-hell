@@ -27,10 +27,10 @@
 #include "util/exception.h"
 #include "util/util.h"
 
-#include <SDL_scancode.h>
-#include <SDL_keyboard.h>
-#include <SDL_mouse.h>
-#include <SDL_clipboard.h>
+#include <SDL3/SDL_scancode.h>
+#include <SDL3/SDL_keyboard.h>
+#include <SDL3/SDL_mouse.h>
+#include <SDL3/SDL_clipboard.h>
 
 #include <vector>
 #include <cmath>
@@ -424,7 +424,7 @@ std::unordered_map<std::string, int> strToScancode{
 #undef m
 #define m(ctrl) {#ctrl, SDL_CONTROLLER_BUTTON_##ctrl}
 
-std::unordered_map<std::string, SDL_GameControllerButton> strToGCButton {
+std::unordered_map<std::string, SDL_GamepadButton> strToGCButton {
     m(A), m(B), m(X), m(Y),
     m(BACK), m(GUIDE), m(START),
     m(LEFTSTICK), m(RIGHTSTICK),
@@ -552,7 +552,7 @@ struct CtrlButtonBinding : public Binding
         return true;
     }
     
-    SDL_GameControllerButton source;
+    SDL_GamepadButton source;
 };
 
 struct CtrlAxisBinding : public Binding
@@ -689,13 +689,13 @@ struct InputPrivate
     uint8_t *rawStatesOld;
     
     // Gamepad button states
-    uint8_t rawButtonStateArray[SDL_CONTROLLER_BUTTON_MAX*2];
+    uint8_t rawButtonStateArray[SDL_GAMEPAD_BUTTON_MAX*2];
     
     uint8_t *rawButtonStates;
     uint8_t *rawButtonStatesOld;
     
     // Gamepad axes & mouse coordinates
-    int16_t axisStateArray[SDL_CONTROLLER_AXIS_MAX];
+    int16_t axisStateArray[SDL_GAMEPAD_AXIS_MAX];
     int mousePos[2];
     bool mouseInWindow;
     
@@ -768,7 +768,7 @@ struct InputPrivate
         rawStatesOld = rawStateArray + SDL_NUM_SCANCODES;
         
         rawButtonStates = rawButtonStateArray;
-        rawButtonStatesOld = rawButtonStateArray + SDL_CONTROLLER_BUTTON_MAX;
+        rawButtonStatesOld = rawButtonStateArray + SDL_GAMEPAD_BUTTON_MAX;
         
         /* Clear buffers */
         clearBuffer();
@@ -897,7 +897,7 @@ struct InputPrivate
         
         memset(rawStates, 0, SDL_NUM_SCANCODES);
         
-        memset(rawButtonStates, 0, SDL_CONTROLLER_BUTTON_MAX);
+        memset(rawButtonStates, 0, SDL_GAMEPAD_BUTTON_MAX);
     }
     
     void checkBindingChange(const RGSSThreadData &rtData)
@@ -1081,12 +1081,12 @@ struct InputPrivate
     
     void updateControllerRaw()
     {
-        for (int i = 0; i < SDL_CONTROLLER_AXIS_MAX; i++)
+        for (int i = 0; i < SDL_GAMEPAD_AXIS_MAX; i++)
             axisStateArray[i] = shState->eThread().controllerState.axes[i];
         
-        memcpy(rawButtonStates, shState->eThread().controllerState.buttons, SDL_CONTROLLER_BUTTON_MAX);
+        memcpy(rawButtonStates, shState->eThread().controllerState.buttons, SDL_GAMEPAD_BUTTON_MAX);
         
-        for (int i = 0; i < SDL_CONTROLLER_BUTTON_MAX; i++)
+        for (int i = 0; i < SDL_GAMEPAD_BUTTON_MAX; i++)
         {
             if (rawButtonStates[i] && rawButtonStatesOld[i])
             {
@@ -1425,7 +1425,7 @@ unsigned int Input::rawAxesLength() {
     return sizeof(p->axisStateArray) / sizeof(int16_t);
 }
 
-short Input::getControllerAxisValue(SDL_GameControllerAxis axis) {
+short Input::getControllerAxisValue(SDL_GamepadAxis axis) {
     if (axis < 0 || (uint32_t)axis >= rawAxesLength())
         return 0;
     
@@ -1487,7 +1487,7 @@ bool Input::getControllerConnected()
 const char *Input::getControllerName()
 {
     return (getControllerConnected()) ?
-    SDL_GameControllerName(shState->eThread().controller()) :
+    SDL_GetGamepadName(shState->eThread().controller()) :
     0;
 }
 
@@ -1496,13 +1496,13 @@ int Input::getControllerPowerLevel()
     if (!getControllerConnected())
         return SDL_JOYSTICK_POWER_UNKNOWN;
     
-    SDL_Joystick *js = SDL_GameControllerGetJoystick(shState->eThread().controller());
+    SDL_Joystick *js = SDL_GetGamepadJoystick(shState->eThread().controller());
     return SDL_JoystickCurrentPowerLevel(js);
 }
 
 bool Input::getTextInputMode()
 {
-    return (SDL_IsTextInputActive() == SDL_TRUE);
+    return (SDL_TextInputActive() == SDL_TRUE);
 }
 
 void Input::setTextInputMode(bool mode)
@@ -1539,15 +1539,15 @@ void Input::setClipboardText(char *text)
         throw Exception(Exception::SDLError, "Failed to set clipboard text: %s", SDL_GetError());
 }
 
-const char *Input::getAxisName(SDL_GameControllerAxis axis) {
-    if (axis < 0 || axis >= SDL_CONTROLLER_AXIS_MAX)
+const char *Input::getAxisName(SDL_GamepadAxis axis) {
+    if (axis < 0 || axis >= SDL_GAMEPAD_AXIS_MAX)
         return "Invalid";
     
     return axisNames[axis];
 }
 
-const char *Input::getButtonName(SDL_GameControllerButton button) {
-    if (button < 0 || button >= SDL_CONTROLLER_BUTTON_MAX)
+const char *Input::getButtonName(SDL_GamepadButton button) {
+    if (button < 0 || button >= SDL_GAMEPAD_BUTTON_MAX)
         return "Invalid";
     
     return buttonNames[button];

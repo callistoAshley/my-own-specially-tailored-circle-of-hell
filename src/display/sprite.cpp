@@ -41,7 +41,7 @@
 # define M_PI 3.14159265358979323846
 #endif
 
-#include <SDL_rect.h>
+#include <SDL3/SDL_rect.h>
 
 #include "sigslot/signal.hpp"
 
@@ -261,7 +261,7 @@ struct SpritePrivate
         self.w = bitmap->width();
         self.h = bitmap->height();
         
-        isVisible = SDL_HasIntersection(&self, &sceneRect);
+        isVisible = SDL_HasRectIntersection(&self, &sceneRect);
     }
     
     void emitWaveChunk(SVertex *&vert, float phase, int width,

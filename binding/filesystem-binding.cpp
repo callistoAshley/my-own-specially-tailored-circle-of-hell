@@ -39,9 +39,9 @@
 #endif
 
 static void fileIntFreeInstance(void *inst) {
-    SDL_RWops *ops = static_cast<SDL_RWops *>(inst);
+    SDL_IOStream *ops = static_cast<SDL_IOStream *>(inst);
     
-    SDL_RWclose(ops);
+    SDL_CloseIO(ops);
     SDL_FreeRW(ops);
 }
 
@@ -52,7 +52,7 @@ DEF_ALLOCFUNC_CUSTOMFREE(FileInt, fileIntFreeInstance);
 #endif
 
 static VALUE fileIntForPath(const char *path, bool rubyExc) {
-    SDL_RWops *ops = SDL_AllocRW();
+    SDL_IOStream *ops = SDL_AllocRW();
     
     try {
         shState->fileSystem().openReadRaw(*ops, path);
@@ -76,13 +76,13 @@ static VALUE fileIntForPath(const char *path, bool rubyExc) {
 
 #if RAPI_MAJOR >= 2
 typedef struct {
-    SDL_RWops *ops;
+    SDL_IOStream *ops;
     void *dst;
     int length;
 } fileIntReadCbArgs;
 
 void call_RWread_cb(fileIntReadCbArgs *args) {
-    SDL_RWread(args->ops, args->dst, 1, args->length);
+    SDL_ReadIO(args->ops, args->dst, 1, args->length);
 }
 #endif
 
@@ -91,20 +91,20 @@ RB_METHOD(fileIntRead) {
     int length = -1;
     rb_get_args(argc, argv, "|i", &length RB_ARG_END);
     
-    SDL_RWops *ops = getPrivateData<SDL_RWops>(self);
+    SDL_IOStream *ops = getPrivateData<SDL_IOStream>(self);
     
     if (length == -1) {
-        Sint64 cur = SDL_RWtell(ops);
-        Sint64 end = SDL_RWseek(ops, 0, SEEK_END);
+        Sint64 cur = SDL_TellIO(ops);
+        Sint64 end = SDL_SeekIO(ops, 0, SEEK_END);
         
-        // Sometimes SDL_RWseek will fail for no reason
+        // Sometimes SDL_SeekIO will fail for no reason
         // with encrypted archives, so let's just ask
         // for the size up front
         if (end < 0)
             end = ops->size(ops);
         
         length = end - cur;
-        SDL_RWseek(ops, cur, SEEK_SET);
+        SDL_SeekIO(ops, cur, SEEK_SET);
     }
     
     if (length == 0)
@@ -121,7 +121,7 @@ RB_METHOD(fileIntRead) {
         return 0;
     }, (void*)&cbargs, 0, 0);
 #else
-    SDL_RWread(ops, RSTRING_PTR(data), 1, length);
+    SDL_ReadIO(ops, RSTRING_PTR(data), 1, length);
 #endif
     
     return data;
@@ -130,8 +130,8 @@ RB_METHOD(fileIntRead) {
 RB_METHOD(fileIntClose) {
     RB_UNUSED_PARAM;
     
-    SDL_RWops *ops = getPrivateData<SDL_RWops>(self);
-    SDL_RWclose(ops);
+    SDL_IOStream *ops = getPrivateData<SDL_IOStream>(self);
+    SDL_CloseIO(ops);
     
     return Qnil;
 }
@@ -139,10 +139,10 @@ RB_METHOD(fileIntClose) {
 RB_METHOD(fileIntGetByte) {
     RB_UNUSED_PARAM;
     
-    SDL_RWops *ops = getPrivateData<SDL_RWops>(self);
+    SDL_IOStream *ops = getPrivateData<SDL_IOStream>(self);
     
     unsigned char byte;
-    size_t result = SDL_RWread(ops, &byte, 1, 1);
+    size_t result = SDL_ReadIO(ops, &byte, 1, 1);
     
     return (result == 1) ? rb_fix_new(byte) : Qnil;
 }
@@ -155,9 +155,9 @@ RB_METHOD(fileIntBinmode) {
 
 #if RAPI_FULL <= 187
 RB_METHOD(fileIntPos) {
-    SDL_RWops *ops = getPrivateData<SDL_RWops>(self);
+    SDL_IOStream *ops = getPrivateData<SDL_IOStream>(self);
     
-    long long pos = SDL_RWtell(ops); // Will return -1 if it doesn't work
+    long long pos = SDL_TellIO(ops); // Will return -1 if it doesn't work
     return LL2NUM(pos);
 }
 #endif

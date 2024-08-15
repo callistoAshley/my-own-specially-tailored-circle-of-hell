@@ -5,7 +5,7 @@
 //  Created by ゾロアーク on 11/21/20.
 //
 
-#include <SDL_filesystem.h>
+#include <SDL3/SDL_filesystem.h>
 
 #include "filesystemImpl.h"
 #include "util/exception.h"
@@ -81,7 +81,7 @@ std::string filesystemImpl::normalizePath(const char *path, bool preferred, bool
     for (size_t i = 0; i < ret.length(); i++) {
         char sep;
         char sep_alt;
-#ifdef __WIN32__
+#ifdef SDL_PLATFORM_WIN32
         if (preferred) {
             sep = '\\';
             sep_alt = '/';

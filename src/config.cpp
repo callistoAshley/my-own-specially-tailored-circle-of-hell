@@ -6,7 +6,7 @@
 //
 
 #include "config.h"
-#include <SDL_filesystem.h>
+#include <SDL3/SDL_filesystem.h>
 #include <assert.h>
 
 #include <stdint.h>
@@ -155,13 +155,13 @@ void Config::read(int argc, char *argv[]) {
         {"frameSkip", false},
         {"syncToRefreshrate", false},
         {"solidFonts", json::array({})},
-#if defined(__APPLE__) && defined(__aarch64__)
+#if defined(SDL_PLATFORM_APPLE) && defined(__aarch64__)
         {"preferMetalRenderer", true},
 #else
         {"preferMetalRenderer", false},
 #endif
         {"subImageFix", false},
-#ifdef __WIN32__
+#ifdef SDL_PLATFORM_WIN32
         {"enableBlitting", false},
 #else
         {"enableBlitting", true},
@@ -295,7 +295,7 @@ try { exp } catch (...) {}
     for (std::string & solidFont : solidFonts)
         std::transform(solidFont.begin(), solidFont.end(), solidFont.begin(),
             [](unsigned char c) { return std::tolower(c); });
-#ifdef __APPLE__
+#ifdef SDL_PLATFORM_APPLE
     SET_OPT(preferMetalRenderer, boolean);
 #endif
     SET_OPT(subImageFix, boolean);
@@ -342,7 +342,7 @@ try { exp } catch (...) {}
     // Determine whether to open a console window on... Windows
     winConsole = getEnvironmentBool("MKXPZ_WINDOWS_CONSOLE", editor.debug);
     
-#ifdef __APPLE__
+#ifdef SDL_PLATFORM_APPLE
     // Determine whether to use the Metal renderer on macOS
     // Environment variable takes priority over the json setting
     preferMetalRenderer = isMetalSupported() && getEnvironmentBool("MKXPZ_MACOS_METAL", preferMetalRenderer);

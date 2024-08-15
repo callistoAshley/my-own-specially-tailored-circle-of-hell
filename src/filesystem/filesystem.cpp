@@ -40,49 +40,49 @@
 #include <unistd.h>
 #include <vector>
 
-#ifdef __APPLE__
+#ifdef SDL_PLATFORM_APPLE
 #include <iconv.h>
 #endif
 
-#ifdef __WIN32__
+#ifdef SDL_PLATFORM_WIN32
 #include <direct.h>
 #endif
 
 struct SDLRWIoContext {
-  SDL_RWops *ops;
+  SDL_IOStream *ops;
   std::string filename;
 
   SDLRWIoContext(const char *filename)
-      : ops(SDL_RWFromFile(filename, "r")), filename(filename) {
+      : ops(SDL_IOFromFile(filename, "r")), filename(filename) {
     if (!ops)
       throw Exception(Exception::SDLError, "Failed to open file: %s",
                       SDL_GetError());
   }
 
-  ~SDLRWIoContext() { SDL_RWclose(ops); }
+  ~SDLRWIoContext() { SDL_CloseIO(ops); }
 };
 
 static PHYSFS_Io *createSDLRWIo(const char *filename);
 
-static SDL_RWops *getSDLRWops(PHYSFS_Io *io) {
+static SDL_IOStream *getSDLRWops(PHYSFS_Io *io) {
   return static_cast<SDLRWIoContext *>(io->opaque)->ops;
 }
 
 static PHYSFS_sint64 SDLRWIoRead(struct PHYSFS_Io *io, void *buf,
                                  PHYSFS_uint64 len) {
-  return SDL_RWread(getSDLRWops(io), buf, 1, len);
+  return SDL_ReadIO(getSDLRWops(io), buf, 1, len);
 }
 
 static int SDLRWIoSeek(struct PHYSFS_Io *io, PHYSFS_uint64 offset) {
-  return (SDL_RWseek(getSDLRWops(io), offset, RW_SEEK_SET) != -1);
+  return (SDL_SeekIO(getSDLRWops(io), offset, SDL_IO_SEEK_SET) != -1);
 }
 
 static PHYSFS_sint64 SDLRWIoTell(struct PHYSFS_Io *io) {
-  return SDL_RWseek(getSDLRWops(io), 0, RW_SEEK_CUR);
+  return SDL_SeekIO(getSDLRWops(io), 0, SDL_IO_SEEK_CUR);
 }
 
 static PHYSFS_sint64 SDLRWIoLength(struct PHYSFS_Io *io) {
-  return SDL_RWsize(getSDLRWops(io));
+  return SDL_GetIOSize(getSDLRWops(io));
 }
 
 static struct PHYSFS_Io *SDLRWIoDuplicate(struct PHYSFS_Io *io) {
@@ -129,11 +129,11 @@ static PHYSFS_Io *createSDLRWIo(const char *filename) {
   return io;
 }
 
-static inline PHYSFS_File *sdlPHYS(SDL_RWops *ops) {
+static inline PHYSFS_File *sdlPHYS(SDL_IOStream *ops) {
   return static_cast<PHYSFS_File *>(ops->hidden.unknown.data1);
 }
 
-static Sint64 SDL_RWopsSize(SDL_RWops *ops) {
+static Sint64 SDL_RWopsSize(SDL_IOStream *ops) {
   PHYSFS_File *f = sdlPHYS(ops);
 
   if (!f)
@@ -142,7 +142,7 @@ static Sint64 SDL_RWopsSize(SDL_RWops *ops) {
   return PHYSFS_fileLength(f);
 }
 
-static Sint64 SDL_RWopsSeek(SDL_RWops *ops, int64_t offset, int whence) {
+static Sint64 SDL_RWopsSeek(SDL_IOStream *ops, int64_t offset, int whence) {
   PHYSFS_File *f = sdlPHYS(ops);
 
   if (!f)
@@ -152,13 +152,13 @@ static Sint64 SDL_RWopsSeek(SDL_RWops *ops, int64_t offset, int whence) {
 
   switch (whence) {
   default:
-  case RW_SEEK_SET:
+  case SDL_IO_SEEK_SET:
     base = 0;
     break;
-  case RW_SEEK_CUR:
+  case SDL_IO_SEEK_CUR:
     base = PHYSFS_tell(f);
     break;
-  case RW_SEEK_END:
+  case SDL_IO_SEEK_END:
     base = PHYSFS_fileLength(f);
     break;
   }
@@ -168,7 +168,7 @@ static Sint64 SDL_RWopsSeek(SDL_RWops *ops, int64_t offset, int whence) {
   return (result != 0) ? PHYSFS_tell(f) : -1;
 }
 
-static size_t SDL_RWopsRead(SDL_RWops *ops, void *buffer, size_t size,
+static size_t SDL_RWopsRead(SDL_IOStream *ops, void *buffer, size_t size,
                             size_t maxnum) {
   PHYSFS_File *f = sdlPHYS(ops);
 
@@ -180,7 +180,7 @@ static size_t SDL_RWopsRead(SDL_RWops *ops, void *buffer, size_t size,
   return (result != -1) ? (result / size) : 0;
 }
 
-static size_t SDL_RWopsWrite(SDL_RWops *ops, const void *buffer, size_t size,
+static size_t SDL_RWopsWrite(SDL_IOStream *ops, const void *buffer, size_t size,
                              size_t num) {
   PHYSFS_File *f = sdlPHYS(ops);
 
@@ -192,7 +192,7 @@ static size_t SDL_RWopsWrite(SDL_RWops *ops, const void *buffer, size_t size,
   return (result != -1) ? (result / size) : 0;
 }
 
-static int SDL_RWopsClose(SDL_RWops *ops) {
+static int SDL_RWopsClose(SDL_IOStream *ops) {
   PHYSFS_File *f = sdlPHYS(ops);
 
   if (!f)
@@ -204,7 +204,7 @@ static int SDL_RWopsClose(SDL_RWops *ops) {
   return (result != 0) ? 0 : -1;
 }
 
-static int SDL_RWopsCloseFree(SDL_RWops *ops) {
+static int SDL_RWopsCloseFree(SDL_IOStream *ops) {
   int result = SDL_RWopsClose(ops);
 
   SDL_FreeRW(ops);
@@ -245,7 +245,7 @@ static const char *findExt(const char *filename) {
   return 0;
 }
 
-static void initReadOps(PHYSFS_File *handle, SDL_RWops &ops, bool freeOnClose) {
+static void initReadOps(PHYSFS_File *handle, SDL_IOStream &ops, bool freeOnClose) {
   ops.size = SDL_RWopsSize;
   ops.seek = SDL_RWopsSeek;
   ops.read = SDL_RWopsRead;
@@ -328,7 +328,7 @@ void FileSystem::addPath(const char *path, const char *mountpoint, bool reload) 
     int state = PHYSFS_mount(path, mountpoint, 1);
   if (!state) {
     /* If it didn't work, try mounting via a wrapped
-     * SDL_RWops */
+     * SDL_IOStream */
     PHYSFS_Io *io = createSDLRWIo(path);
 
     if (io)
@@ -356,26 +356,26 @@ struct CacheEnumData {
   FileSystemPrivate *p;
   std::stack<std::vector<std::string> *> fileLists;
 
-#ifdef __APPLE__
+#ifdef SDL_PLATFORM_APPLE
   iconv_t nfd2nfc;
   char buf[512];
 #endif
 
   CacheEnumData(FileSystemPrivate *p) : p(p) {
-#ifdef __APPLE__
+#ifdef SDL_PLATFORM_APPLE
     nfd2nfc = iconv_open("utf-8", "utf-8-mac");
 #endif
   }
 
   ~CacheEnumData() {
-#ifdef __APPLE__
+#ifdef SDL_PLATFORM_APPLE
     iconv_close(nfd2nfc);
 #endif
   }
 
   /* Converts in-place */
   void toNFC(char *inout) {
-#ifdef __APPLE__
+#ifdef SDL_PLATFORM_APPLE
     size_t srcSize = strlen(inout);
     size_t bufSize = sizeof(buf);
     char *bufPtr = buf;
@@ -494,12 +494,12 @@ static PHYSFS_EnumerateCallbackResult fontSetEnumCB(void *data, const char *dir,
   if (!handle)
     return PHYSFS_ENUM_ERROR;
 
-  SDL_RWops ops;
+  SDL_IOStream ops;
   initReadOps(handle, ops, false);
 
   d->sfs->initFontSetCB(ops, filename);
 
-  SDL_RWclose(&ops);
+  SDL_CloseIO(&ops);
 
   return PHYSFS_ENUM_OK;
 }
@@ -531,7 +531,7 @@ void FileSystem::initFontSets(SharedFontState &sfs) {
 
 struct OpenReadEnumData {
   FileSystem::OpenHandler &handler;
-  SDL_RWops ops;
+  SDL_IOStream ops;
 
   /* The filename (without directory) we're looking for */
   const char *filename;
@@ -659,7 +659,7 @@ void FileSystem::openRead(OpenHandler &handler, const char *filename) {
     throw Exception(Exception::NoFileError, "%s", filename);
 }
 
-void FileSystem::openReadRaw(SDL_RWops &ops, const char *filename,
+void FileSystem::openReadRaw(SDL_IOStream &ops, const char *filename,
                              bool freeOnClose) {
 
   PHYSFS_File *handle = PHYSFS_openRead(normalize(filename, 0, 0).c_str());

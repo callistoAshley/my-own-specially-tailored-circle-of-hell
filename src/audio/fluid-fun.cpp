@@ -1,18 +1,18 @@
 #include "fluid-fun.h"
 
 #include <string.h>
-#include <SDL_loadso.h>
-#include <SDL_platform.h>
+#include <SDL3/SDL_loadso.h>
+#include <SDL3/SDL_platform.h>
 
 #include "debugwriter.h"
 
-#if __LINUX__ || __ANDROID__
+#if SDL_PLATFORM_LINUX || __ANDROID__
 #define FLUID_LIB "libfluidsynth.so.3"
 #elif MKXPZ_BUILD_XCODE
 #define FLUID_LIB "@rpath/libfluidsynth.dylib"
-#elif __APPLE__
+#elif SDL_PLATFORM_APPLE
 #define FLUID_LIB "libfluidsynth.3.dylib"
-#elif __WIN32__
+#elif SDL_PLATFORM_WIN32
 #define FLUID_LIB "fluidsynth.dll"
 #else
 #error "platform not recognized"

@@ -1,7 +1,7 @@
 // Most of the MiniFFI class was taken from Ruby 1.8's Win32API.c,
 // it's just as basic but should work fine for the moment
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include <cstdint>
 
 #include "filesystem/filesystem.h"
@@ -12,7 +12,7 @@
 #include <ruby/thread.h>
 #endif
 
-#if defined(__linux__) || defined(__APPLE__)
+#if defined(__linux__) || defined(SDL_PLATFORM_APPLE)
 #define MVAL2RB(v) ULONG2NUM(v)
 #define RB2MVAL(v) (mffi_value)NUM2ULONG(v)
 #else
@@ -51,14 +51,14 @@ RB_METHOD(MiniFFI_initialize) {
     rb_scan_args(argc, argv, "22", &libname, &func, &imports, &exports);
     SafeStringValue(libname);
     SafeStringValue(func);
-#ifdef __APPLE__
+#ifdef SDL_PLATFORM_APPLE
     void *hlib = SDL_LoadObject(mkxp_fs::normalizePath(RSTRING_PTR(libname), 1, 1).c_str());
 #else
     void *hlib = SDL_LoadObject(RSTRING_PTR(libname));
 #endif
     setPrivateData(self, hlib);
     void *hfunc = MiniFFI_GetFunctionHandle(hlib, RSTRING_PTR(func));
-#ifdef __WIN32__
+#ifdef SDL_PLATFORM_WIN32
     if (hlib && !hfunc) {
         VALUE func_a = rb_str_new3(func);
         func_a = rb_str_cat(func_a, "A", 1);

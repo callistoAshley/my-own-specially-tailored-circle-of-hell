@@ -19,7 +19,7 @@
  ** along with mkxp.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <SDL_joystick.h>
+#include <SDL3/SDL_joystick.h>
 
 
 #include "eventthread.h"

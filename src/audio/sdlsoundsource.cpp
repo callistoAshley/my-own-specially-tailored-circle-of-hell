@@ -22,19 +22,19 @@
 #include "aldatasource.h"
 #include "exception.h"
 
-#include <SDL_sound.h>
+#include <SDL3/SDL_sound.h>
 
 struct SDLSoundSource : ALDataSource
 {
 	Sound_Sample *sample;
-	SDL_RWops &srcOps;
+	SDL_IOStream &srcOps;
 	uint8_t sampleSize;
 	bool looped;
 
 	ALenum alFormat;
 	ALsizei alFreq;
 
-	SDLSoundSource(SDL_RWops &ops,
+	SDLSoundSource(SDL_IOStream &ops,
 	               const char *extension,
 	               uint32_t maxBufSize,
 	               bool looped,
@@ -52,14 +52,14 @@ struct SDLSoundSource : ALDataSource
 
 			Sound_AudioInfo desired;
 			SDL_memset(&desired, '\0', sizeof (Sound_AudioInfo));
-			desired.format = AUDIO_F32SYS;
+			desired.format = SDL_AUDIO_F32;
 
 			sample = Sound_NewSample(&srcOps, extension, &desired, maxBufSize);
 		}
 
 		if (!sample)
 		{
-			SDL_RWclose(&ops);
+			SDL_CloseIO(&ops);
 			throw Exception(Exception::SDLError, "SDL_sound: %s", Sound_GetError());
 		}
 
@@ -71,8 +71,8 @@ struct SDLSoundSource : ALDataSource
 			{
 			// OpenAL Soft doesn't support S32 formats.
 			// https://github.com/kcat/openal-soft/issues/934
-			case AUDIO_S32LSB :
-			case AUDIO_S32MSB :
+			case SDL_AUDIO_S32LE :
+			case SDL_AUDIO_S32BE :
 				validFormat = false;
 			}
 
@@ -159,7 +159,7 @@ struct SDLSoundSource : ALDataSource
 	}
 };
 
-ALDataSource *createSDLSource(SDL_RWops &ops,
+ALDataSource *createSDLSource(SDL_IOStream &ops,
                               const char *extension,
 			                  uint32_t maxBufSize,
 			                  bool looped,
