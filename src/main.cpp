@@ -203,7 +203,7 @@ static void setupWindowIcon(const Config &conf, SDL_Window *win) {
   else
     iconSrc = SDL_IOFromFile(conf.iconPath.c_str(), "rb");
 
-  SDL_Surface *iconImg = IMG_Load_RW(iconSrc, SDL_TRUE);
+  SDL_Surface *iconImg = IMG_Load_IO(iconSrc, SDL_TRUE);
 
   if (iconImg) {
     SDL_SetWindowIcon(win, iconImg);
@@ -213,7 +213,6 @@ static void setupWindowIcon(const Config &conf, SDL_Window *win) {
 
 int main(int argc, char *argv[]) {
     SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, "0");
-    SDL_SetHint(SDL_HINT_ACCELEROMETER_AS_JOYSTICK, "0");
 
 #ifdef GLES2_HEADER
     SDL_SetHint(SDL_HINT_OPENGL_ES_DRIVER, "1");
@@ -336,7 +335,7 @@ int main(int argc, char *argv[]) {
     if (conf.winResizable)
       winFlags |= SDL_WINDOW_RESIZABLE;
     if (conf.fullscreen)
-      winFlags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+      winFlags |= SDL_WINDOW_FULLSCREEN;
     
 #ifdef GLES2_HEADER
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
@@ -351,8 +350,7 @@ int main(int argc, char *argv[]) {
 #endif
 #endif
     
-    win = SDL_CreateWindow(conf.windowTitle.c_str(), SDL_WINDOWPOS_UNDEFINED,
-                           SDL_WINDOWPOS_UNDEFINED, conf.defScreenW,
+    win = SDL_CreateWindow(conf.windowTitle.c_str(), conf.defScreenW,
                            conf.defScreenH, winFlags);
 
     if (!win) {
@@ -421,8 +419,8 @@ int main(int argc, char *argv[]) {
     }
     #endif
 
-    SDL_DisplayMode mode;
-    SDL_GetDisplayMode(0, 0, &mode);
+    SDL_DisplayID display_id = SDL_GetDisplayForWindow(win);
+    SDL_DisplayMode mode = *SDL_GetCurrentDisplayMode(display_id);
 
     /* Can't sync to display refresh rate if its value is unknown */
     if (!mode.refresh_rate)
@@ -453,7 +451,7 @@ int main(int argc, char *argv[]) {
     SDL_GetWindowSize(win, &winW, &winH);
     rtData.windowSizeMsg.post(Vec2i(winW, winH));
     
-    SDL_GL_GetDrawableSize(win, &drwW, &drwH);
+    SDL_GetWindowSizeInPixels(win, &drwW, &drwH);
     rtData.drawableSizeMsg.post(Vec2i(drwW, drwH));
 
     /* Load and post key bindings */

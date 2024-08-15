@@ -3,11 +3,108 @@
 
 #include <SDL3/SDL_atomic.h>
 #include <SDL3/SDL_thread.h>
-#include <SDL3/SDL_rwops.h>
+#include <SDL3/SDL_iostream.h>
 
 #include <string>
 #include <iostream>
 #include <unistd.h>
+
+// SDL3 removed SDL_RWFromFP, so we need to make our own version
+struct IOStreamStdioFPData {
+	FILE *fp;
+	SDL_bool autoclose;
+};
+
+
+static Sint64 SDLCALL stdio_seek(void *userdata, Sint64 offset, SDL_IOWhence whence)
+{
+    FILE *fp = ((IOStreamStdioFPData *) userdata)->fp;
+    int stdiowhence;
+
+    switch (whence) {
+    case SDL_IO_SEEK_SET:
+        stdiowhence = SEEK_SET;
+        break;
+    case SDL_IO_SEEK_CUR:
+        stdiowhence = SEEK_CUR;
+        break;
+    case SDL_IO_SEEK_END:
+        stdiowhence = SEEK_END;
+        break;
+    default:
+        return SDL_SetError("Unknown value for 'whence'");
+    }
+
+    if (fseek(fp, offset, stdiowhence) == 0) {
+        const Sint64 pos = ftell(fp);
+        if (pos < 0) {
+            return SDL_SetError("Couldn't get stream offset");
+        }
+        return pos;
+    }
+    return SDL_SetError("Couldn't seek in stream");
+}
+
+static size_t SDLCALL stdio_read(void *userdata, void *ptr, size_t size, SDL_IOStatus *status)
+{
+    FILE *fp = ((IOStreamStdioFPData *) userdata)->fp;
+    const size_t bytes = fread(ptr, 1, size, fp);
+    if (bytes == 0 && ferror(fp)) {
+        SDL_SetError("Couldn't read from stream");
+    }
+    return bytes;
+}
+
+static size_t SDLCALL stdio_write(void *userdata, const void *ptr, size_t size, SDL_IOStatus *status)
+{
+    FILE *fp = ((IOStreamStdioFPData *) userdata)->fp;
+    const size_t bytes = fwrite(ptr, 1, size, fp);
+    if (bytes == 0 && ferror(fp)) {
+        SDL_SetError("Couldn't write to stream");
+    }
+    return bytes;
+}
+
+static int SDLCALL stdio_close(void *userdata)
+{
+    IOStreamStdioFPData *rwopsdata = (IOStreamStdioFPData *) userdata;
+    int status = 0;
+    if (rwopsdata->autoclose) {
+        if (fclose(rwopsdata->fp) != 0) {
+            status = SDL_SetError("Couldn't close stream");
+        }
+    }
+    return status;
+}
+
+
+static SDL_IOStream *SDL_RWFromFP(FILE *fp, SDL_bool autoclose)
+{
+    SDL_IOStreamInterface iface;
+    IOStreamStdioFPData *rwopsdata;
+    SDL_IOStream *rwops;
+
+    rwopsdata = (IOStreamStdioFPData *) SDL_malloc(sizeof (*rwopsdata));
+    if (!rwopsdata) {
+        return NULL;
+    }
+
+    SDL_zero(iface);
+    /* There's no stdio_size because SDL_GetIOSize emulates it the same way we'd do it for stdio anyhow. */
+    iface.seek = stdio_seek;
+    iface.read = stdio_read;
+    iface.write = stdio_write;
+    iface.close = stdio_close;
+
+    rwopsdata->fp = fp;
+    rwopsdata->autoclose = autoclose;
+
+    rwops = SDL_OpenIO(&iface, rwopsdata);
+    if (!rwops) {
+        iface.close(rwopsdata);
+    }
+    return rwops;
+}
 
 struct AtomicFlag
 {
@@ -87,7 +184,7 @@ inline bool readFileSDL(const char *path,
 	size_t back = out.size();
 
 	out.resize(back+size);
-	size_t read = SDL_ReadIO(f, &out[back], 1, size);
+	size_t read = SDL_ReadIO(f, &out[back], size);
 	SDL_CloseIO(f);
 
 	if (read != (size_t) size)
@@ -125,7 +222,7 @@ private:
 			start += pbSize;
 		}
 
-		size_t n = SDL_ReadIO(ops, start, 1, bufSize - (start - base));
+		size_t n = SDL_ReadIO(ops, start, bufSize - (start - base));
 		if (n == 0)
 			return traits_type::eof();
 

@@ -22,7 +22,7 @@
 #ifndef FILESYSTEM_H
 #define FILESYSTEM_H
 
-#include <SDL3/SDL_rwops.h>
+#include <SDL3/SDL_iostream.h>
 #include <string>
 
 #include "filesystemImpl.h"
