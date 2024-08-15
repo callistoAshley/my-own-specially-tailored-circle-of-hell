@@ -22,7 +22,6 @@
 	#include <mmsystem.h>
 	#include <security.h>
 	#include <shlobj.h>
-	#include <SDL3/SDL_syswm.h>
 #elif defined SDL_PLATFORM_APPLE || __linux__
 	#include <stdlib.h>
 	#include <unistd.h>

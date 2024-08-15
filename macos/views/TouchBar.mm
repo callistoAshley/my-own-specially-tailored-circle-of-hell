@@ -6,7 +6,6 @@
 //
 
 #import <AppKit/AppKit.h>
-#import <SDL_syswm.h>
 #import <SDL_events.h>
 #import <SDL_timer.h>
 #import <SDL_scancode.h>

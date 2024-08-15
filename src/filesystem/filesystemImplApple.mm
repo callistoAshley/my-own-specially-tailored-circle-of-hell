@@ -6,7 +6,6 @@
 //
 
 #import <AppKit/AppKit.h>
-#import <SDL3/SDL_syswm.h>
 
 #import <SDL3/SDL_filesystem.h>
 
