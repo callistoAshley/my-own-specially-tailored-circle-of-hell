@@ -83,7 +83,7 @@ struct VorbisSource : ALDataSource
 	    : src(ops),
 	      currentFrame(0)
 	{
-		int error = ov_open_callbacks(&src, &vf, 0, 0, OvCallbacks);
+		int error = ov_open_callbacks(src, &vf, 0, 0, OvCallbacks);
 
 		if (error)
 		{
