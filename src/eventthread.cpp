@@ -113,6 +113,7 @@ enum
     REQUEST_SETTINGS,
     REQUEST_NEW_WINDOW,
     REQUEST_DESTROY_WINDOW,
+    REQUEST_WINDOW_VISIBLE,
     
     UPDATE_FPS,
     UPDATE_SCREEN_RECT,
@@ -615,6 +616,15 @@ void EventThread::process(RGSSThreadData &rtData)
                         SDL_DestroyWindow(static_cast<SDL_Window*>(event.user.data1));
                         break;
                     }
+                    case REQUEST_WINDOW_VISIBLE:
+                    {
+                        SDL_Window *window = static_cast<SDL_Window*>(event.user.data1);
+                        if (event.user.data2)
+                            SDL_ShowWindow(window);
+                        else
+                            SDL_HideWindow(window);
+                        break;
+                    }
                         
                     case UPDATE_FPS :
                         if (rtData.config.printFPS)
@@ -869,9 +879,23 @@ SDL_Window *EventThread::requestNewWindow(const CreateWindowArgs *args)
     new_window = nullptr; // reset 
     SDL_PushEvent(&event);
     while (!new_window)
-        SDL_Delay(1);
+        // we want to delay ~0.1ms
+        // ideally the delay should be long enough that the window is created in one loop, 
+        // but short enough that we aren't waiting for a long time after the window is created
+        SDL_DelayNS(10000);
     return (SDL_Window*) new_window;
 }
+
+void EventThread::requestWindowVisible(SDL_Window *window, bool visible)
+{
+    SDL_Event event;
+    event.type = usrIdStart + REQUEST_WINDOW_VISIBLE;
+    event.user.data1 = window;
+    event.user.data2 = (void*) visible;
+
+    SDL_PushEvent(&event);
+}
+
 void EventThread::destroySDLWindow(SDL_Window *window)
 {
     SDL_Event event;

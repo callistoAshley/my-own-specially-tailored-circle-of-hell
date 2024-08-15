@@ -339,6 +339,9 @@ RB_METHOD(monitorWindowInit) {
   int w = NUM2INT(vw);
   int h = NUM2INT(vh);
 
+  if (w < 1 || h < 1)
+    rb_raise(rb_eArgError, "Invalid window size");
+
   const char* name = " ";
   unsigned int flags = SDL_WINDOW_OPENGL | SDL_WINDOW_UTILITY | SDL_WINDOW_BORDERLESS | SDL_WINDOW_TRANSPARENT;
   if (!NIL_P(kwargs)) {
@@ -395,11 +398,11 @@ RB_METHOD(monitorWindowResize) {
   int w, h;
   rb_get_args(argc, argv, "ii", &w, &h RB_ARG_END);
 
-  window->scene.resize(w, h);
+  if (w < 1 || h < 1)
+    rb_raise(rb_eArgError, "Invalid window size");
 
   SDL_SetWindowSize(window->window, w, h);
-
-  GFX_UNLOCK;
+  window->scene.resize(w, h);
 
   return Qnil;
 }

@@ -574,8 +574,10 @@ static SDL_GLContext initGL(SDL_Window *win, Config &conf,
 
   printGLInfo();
 
-  bool vsync = conf.vsync || conf.syncToRefreshrate;
-  SDL_GL_SetSwapInterval(vsync ? 1 : 0);
+  //bool vsync = conf.vsync || conf.syncToRefreshrate;
+  // SDL_GL_SetSwapInterval(vsync ? 1 : 0);
+  // For various reasons, we don't want vsync. So, we just force it off for now.
+  SDL_GL_SetSwapInterval(0);
 
   // GLDebugLogger dLogger;
   return glCtx;

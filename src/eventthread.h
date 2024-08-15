@@ -104,18 +104,19 @@ public:
 	// get random freezes without doing this on the event thread
 	SDL_Window* requestNewWindow(const CreateWindowArgs *args);
 	void destroySDLWindow(SDL_Window *window);
+	void requestWindowVisible(SDL_Window *window, bool visible);
     
-    void requestTextInputMode(bool mode);
-    
-    void requestSettingsMenu();
+  void requestTextInputMode(bool mode);
+  
+  void requestSettingsMenu();
 
 	void requestTerminate();
 
 	bool getFullscreen() const;
 	bool getShowCursor() const;
-    bool getControllerConnected() const;
-    
-    SDL_Gamepad *controller() const;
+  bool getControllerConnected() const;
+  
+  SDL_Gamepad *controller() const;
 
 	void showMessageBox(const char *body, int flags = 0);
 
