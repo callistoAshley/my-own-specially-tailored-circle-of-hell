@@ -29,7 +29,7 @@
 #include <string>
 
 struct SDL_IOStream;
-struct _TTF_Font;
+struct TTF_Font;
 struct Config;
 
 struct SharedFontStatePrivate;
@@ -47,12 +47,12 @@ public:
 	void initFontSetCB(SDL_IOStream &ops,
 	                   const std::string &filename);
 
-	_TTF_Font *getFont(std::string family,
+	TTF_Font *getFont(std::string family,
 	                   int size);
 
 	bool fontPresent(std::string family) const;
 
-	static _TTF_Font *openBundled(int size);
+	static TTF_Font *openBundled(int size);
     void setDefaultFontFamily(const std::string &family);
 
 private:
@@ -116,7 +116,7 @@ public:
 	static void initDefaults(const SharedFontState &sfs);
 
 	/* internal */
-	_TTF_Font *getSdlFont();
+	TTF_Font *getSdlFont();
 
 private:
 	FontPrivate *p;

@@ -96,7 +96,7 @@ std::string sourceDescString(const SourceDesc &src)
 		if (src.d.scan == SDL_SCANCODE_LSHIFT)
 			return "Shift";
 
-		SDL_Keycode key = SDL_GetKeyFromScancode(src.d.scan);
+		SDL_Keycode key = SDL_GetKeyFromScancode(src.d.scan, SDL_KMOD_NONE, false);
 		const char *str = SDL_GetKeyName(key);
 
 		if (*str == '\0')
@@ -286,12 +286,12 @@ struct SettingsMenuPrivate
 		SDL_GetMasksForPixelFormat(SDL_PIXELFORMAT_ABGR8888,
 		                           &bpp, &rMask, &gMask, &bMask, &aMask);
 
-		return SDL_CreateRGBSurface(0, w, h, bpp, rMask, gMask, bMask, 0);
+		return SDL_CreateSurface(w, h, SDL_GetPixelFormatForMasks(bpp, rMask, gMask, bMask, 0));
 	}
 
 	void fillSurface(SDL_Surface *surf, uint8_t grey)
 	{
-		SDL_FillSurfaceRect(surf, 0, SDL_MapRGBA(rgb, grey, grey, grey, 255));
+		SDL_FillSurfaceRect(surf, 0, SDL_MapSurfaceRGBA(surf, grey, grey, grey, 255));
 	}
 
 	void fillRect(SDL_Surface *surf,
@@ -299,7 +299,7 @@ struct SettingsMenuPrivate
 	              uint8_t r, uint8_t g, uint8_t b)
 	{
 		SDL_Rect rect = { drawOff.x+x, drawOff.y+y, w, h };
-		SDL_FillSurfaceRect(surf, &rect, SDL_MapRGB(rgb, r, g, b));
+		SDL_FillSurfaceRect(surf, &rect, SDL_MapSurfaceRGB(surf, r, g, b));
 	}
 
 	void fillRect(SDL_Surface *surf, uint8_t grey,
@@ -611,7 +611,7 @@ struct SettingsMenuPrivate
 		{
 		case SDL_EVENT_KEY_DOWN:
 			desc.type = Key;
-			desc.d.scan = event.key.keysym.scancode;
+			desc.d.scan = event.key.scancode;
 
 			/* Special case aliases */
 			if (desc.d.scan == SDL_SCANCODE_RSHIFT)
@@ -624,19 +624,19 @@ struct SettingsMenuPrivate
 
 		case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
 			desc.type = CButton;
-			desc.d.cb = (SDL_GamepadButton)event.cbutton.button;
+			desc.d.cb = (SDL_GamepadButton)event.gbutton.button;
 			break;
 
 		case SDL_EVENT_GAMEPAD_AXIS_MOTION:
 		{
-			int v = event.caxis.value;
+			int v = event.gaxis.value;
 
 			/* Only register if pushed halfway through */
 			if (v > -JAXIS_THRESHOLD && v < JAXIS_THRESHOLD)
 				return true;
 
 			desc.type = CAxis;
-			desc.d.ca.axis = (SDL_GamepadAxis)event.caxis.axis;
+			desc.d.ca.axis = (SDL_GamepadAxis)event.gaxis.axis;
 			desc.d.ca.dir = v < 0 ? Negative : Positive;
 			break;
 		}
@@ -925,14 +925,13 @@ SettingsMenu::SettingsMenu(RGSSThreadData &rtData)
 	p->destroyReq = false;
 
 	p->window = SDL_CreateWindow("Key bindings",
-	                             SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
 	                             winSize.x, winSize.y, SDL_WINDOW_INPUT_FOCUS);
 	p->winSurf = SDL_GetWindowSurface(p->window);
 	p->winID = SDL_GetWindowID(p->window);
 
 	p->font = SharedFontState::openBundled(fontSize);
 
-	p->rgb = p->winSurf->format;
+	p->rgb = &p->winSurf->format;
 
 	const size_t layoutW = 2;
 	const size_t layoutH = 6;
@@ -1008,7 +1007,6 @@ bool SettingsMenu::onEvent(const SDL_Event &event)
 	/* First, check whether this event is for us */
 	switch (event.type)
 	{
-	case SDL_WINDOWEVENT :
 	case SDL_EVENT_MOUSE_BUTTON_DOWN :
 	case SDL_EVENT_MOUSE_BUTTON_UP :
 	case SDL_EVENT_MOUSE_MOTION :
@@ -1029,6 +1027,9 @@ bool SettingsMenu::onEvent(const SDL_Event &event)
 
 	/* Don't try to handle something we don't understand */
 	default:
+		if (event.type >= SDL_EVENT_WINDOW_FIRST && event.type <= SDL_EVENT_WINDOW_LAST)
+			if (event.window.windowID != p->winID)
+				return false;
 		return false;
 	}
 
@@ -1040,34 +1041,29 @@ bool SettingsMenu::onEvent(const SDL_Event &event)
 	case SDL_EVENT_KEY_UP :
 		return true;
 
-	case SDL_WINDOWEVENT :
-		switch (event.window.event)
+	case SDL_EVENT_WINDOW_SHOWN : // SDL is bugged and doesn't give us a first FOCUS_GAINED event
+	case SDL_EVENT_WINDOW_FOCUS_GAINED :
+		p->hasFocus = true;
+		break;
+
+	case SDL_EVENT_WINDOW_FOCUS_LOST :
+		p->hasFocus = false;
+		break;
+
+	case SDL_EVENT_WINDOW_EXPOSED :
+		SDL_UpdateWindowSurface(p->window);
+		break;
+
+	case SDL_EVENT_WINDOW_MOUSE_LEAVE:
+		if (p->hovered)
 		{
-		case SDL_EVENT_WINDOW_SHOWN : // SDL is bugged and doesn't give us a first FOCUS_GAINED event
-		case SDL_EVENT_WINDOW_FOCUS_GAINED :
-			p->hasFocus = true;
-			break;
-
-		case SDL_EVENT_WINDOW_FOCUS_LOST :
-			p->hasFocus = false;
-			break;
-
-		case SDL_EVENT_WINDOW_EXPOSED :
-			SDL_UpdateWindowSurface(p->window);
-			break;
-
-		case SDL_EVENT_WINDOW_MOUSE_LEAVE:
-			if (p->hovered)
-			{
-				p->hovered->leave();
-				p->hovered = 0;
-			}
-			break;
-
-		case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-			p->onCancel();
+			p->hovered->leave();
+			p->hovered = 0;
 		}
+		break;
 
+	case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+		p->onCancel();
 		return true;
 
 	case SDL_EVENT_MOUSE_MOTION:
@@ -1077,9 +1073,9 @@ bool SettingsMenu::onEvent(const SDL_Event &event)
 	case SDL_EVENT_KEY_DOWN:
 		if (p->state != AwaitingInput)
 		{
-			if (event.key.keysym.sym == SDLK_RETURN)
+			if (event.key.key == SDLK_RETURN)
 				p->onAccept();
-			else if (event.key.keysym.sym == SDLK_ESCAPE)
+			else if (event.key.key == SDLK_ESCAPE)
 				p->onCancel();
 
 			return true;
@@ -1087,7 +1083,7 @@ bool SettingsMenu::onEvent(const SDL_Event &event)
 
 		/* Don't let the user bind keys that trigger
 		 * mkxp functions */
-		switch(event.key.keysym.scancode)
+		switch(event.key.scancode)
 		{
 		case SDL_SCANCODE_F1:
 		case SDL_SCANCODE_F2:
