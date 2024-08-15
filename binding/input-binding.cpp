@@ -369,18 +369,19 @@ RB_METHOD(inputControllerPowerLevel) {
     if (!shState->input().getControllerConnected())
         ret = M_SYMBOL("UNKNOWN");
     
-    switch (shState->input().getControllerPowerLevel()) {
-            POWERCASE(ret, MAX);
-            POWERCASE(ret, WIRED);
-            POWERCASE(ret, FULL);
-            POWERCASE(ret, MEDIUM);
-            POWERCASE(ret, LOW);
-            POWERCASE(ret, EMPTY);
+    // FIXME: NEED TO IMPLEMENT THIS!
+    // switch (shState->input().getControllerPowerLevel()) {
+    //         POWERCASE(ret, MAX);
+    //         POWERCASE(ret, WIRED);
+    //         POWERCASE(ret, FULL);
+    //         POWERCASE(ret, MEDIUM);
+    //         POWERCASE(ret, LOW);
+    //         POWERCASE(ret, EMPTY);
             
-        default:
-            ret = M_SYMBOL("UNKNOWN");
-            break;
-    }
+    //     default:
+             ret = M_SYMBOL("UNKNOWN");
+    //         break;
+    // }
     
     return ret;
 }
@@ -392,14 +393,14 @@ VALUE ret = rb_ary_new(); \
 if (!shState->eThread().getControllerConnected()) {\
 rb_ary_push(ret, rb_float_new(0)); rb_ary_push(ret, rb_float_new(0)); \
 }\
-rb_ary_push(ret, rb_float_new(shState->input().getControllerAxisValue(SDL_CONTROLLER_AXIS_##ax1) / 32767.0)); \
-rb_ary_push(ret, rb_float_new(shState->input().getControllerAxisValue(SDL_CONTROLLER_AXIS_##ax2) / 32767.0)); \
+rb_ary_push(ret, rb_float_new(shState->input().getControllerAxisValue(SDL_GAMEPAD_AXIS_##ax1) / 32767.0)); \
+rb_ary_push(ret, rb_float_new(shState->input().getControllerAxisValue(SDL_GAMEPAD_AXIS_##ax2) / 32767.0)); \
 return ret; \
 }
 
 AXISFUNC(Left, LEFTX, LEFTY);
 AXISFUNC(Right, RIGHTX, RIGHTY);
-AXISFUNC(Trigger, TRIGGERLEFT, TRIGGERRIGHT);
+AXISFUNC(Trigger, LEFT_TRIGGER, RIGHT_TRIGGER);
 
 #undef POWERCASE
 #undef M_SYMBOL
