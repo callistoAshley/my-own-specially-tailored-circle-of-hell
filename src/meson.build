@@ -1,28 +1,14 @@
 physfs = dependency('physfs', version: '>=2.1', static: build_static)
 theora = dependency('theora', static: build_static)
 vorbis = dependency('vorbis', static: build_static)
-sdl2 = dependency('SDL2', static: build_static)
-sdl2_ttf = dependency('SDL2_ttf', static: build_static)
-freetype = dependency('freetype2', static: build_static)
+sdl3 = dependency('SDL3', static: build_static)
+sdl3_ttf = dependency('SDL3_ttf', static: build_static)
+sdl3_image = dependency('SDL3_image', static: build_static)
 pixman = dependency('pixman-1', static: build_static)
 png = dependency('libpng', static: build_static)
 zlib = dependency('zlib', static: build_static)
 uchardet = dependency('uchardet', static: build_static)
 cppzmq = dependency('cppzmq', static: true)
-
-# As no pkg-config file is generated for static sdl2_image, and pkg-config is
-# the default option for meson detecting dependencies, pkg-config will fail to
-# find sdl2_image.pc in the build's lib/pkgconfig folder and instead pull it
-# from the locally installed packages if it exists.
-# To work around this, we first check to see if cmake can find our sdl2_image
-# sub project and use that, then check using pkg-config as normal if we are not
-# building the sub project.
-# It looks like upstream SDL_image fixed this for SDL3, so we can hopefully
-# remove this workaround after eventually upgrading to SDL3.
-sdl2_image = dependency('SDL2_image', modules: ['SDL2_image::SDL2_image-static', 'SDL2_image::brotlidec-static', 'SDL2_image::brotlicommon-static', 'SDL2_image::hwy', 'SDL2_image::jxl_dec-static'], static: build_static, method: 'cmake', required: false)
-if sdl2_image.found() == false
-    sdl2_image = dependency('SDL2_image', modules: ['SDL2_image::SDL2_image-static', 'SDL2_image::brotlidec-static', 'SDL2_image::brotlicommon-static', 'SDL2_image::hwy', 'SDL2_image::jxl_dec-static'], static: build_static)
-endif
 
 if host_system == 'windows'
     bz2 = dependency('bzip2', static: build_static)
@@ -78,7 +64,7 @@ if disable_openal == false
     vorbisfile = dependency('vorbisfile', static: build_static)
     ogg = dependency('ogg', static: build_static)
     openal = dependency('openal', static: build_static, method: 'pkg-config')
-    sdl_sound = compilers['cpp'].find_library('SDL2_sound')
+    sdl_sound = compilers['cpp'].find_library('SDL3_sound')
 
     global_dependencies += [vorbisfile, vorbis, ogg, openal, sdl_sound]
 
@@ -118,7 +104,7 @@ if disable_openal == false
     global_include_dirs += include_directories('audio')
 endif
 
-global_dependencies += [zlib, bz2, sdl2, pixman, physfs, theora, sdl2_ttf, freetype, sdl2_image, png, iconv, uchardet, cppzmq, vorbis]
+global_dependencies += [zlib, bz2, sdl3, pixman, physfs, theora, sdl3_ttf, sdl3_image, png, iconv, uchardet, cppzmq, vorbis]
 if host_system == 'windows'
     global_dependencies += compilers['cpp'].find_library('wsock32')
     global_dependencies += compilers['cpp'].find_library('winmm')
