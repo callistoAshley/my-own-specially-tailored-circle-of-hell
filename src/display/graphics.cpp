@@ -52,7 +52,7 @@
 #include <SDL3_image/SDL_image.h>
 #include <SDL3/SDL_timer.h>
 #include <SDL3/SDL_video.h>
-#include <SDL3/SDL_Mutex.h>
+#include <SDL3/SDL_mutex.h>
 #include <SDL3/SDL_thread.h>
 
 #ifdef MKXPZ_STEAM
@@ -93,7 +93,7 @@ typedef struct AudioQueue
 static long readMovie(THEORAPLAY_Io *io, void *buf, long buflen)
 {
     SDL_IOStream *f = (SDL_IOStream *) io->userdata;
-    return (long) SDL_ReadIO(f, buf, 1, buflen);
+    return (long) SDL_ReadIO(f, buf, buflen);
 } // IoFopenRead
 
 
@@ -112,7 +112,7 @@ struct Movie
     bool hasVideo;
     bool skippable;
     Bitmap *videoBitmap;
-    SDL_IOStream srcOps;
+    SDL_IOStream *srcOps;
     #ifndef MKXPZ_NO_OPENAL
     bool hasAudio;
     SDL_Thread *audioThread;
@@ -144,7 +144,7 @@ struct Movie
         // https://ffmpeg.org/doxygen/0.11/group__lavc__misc__pixfmt.html
         THEORAPLAY_Io *io = (THEORAPLAY_Io *) malloc(sizeof (THEORAPLAY_Io));
         if(!io) {
-            SDL_CloseIO(&srcOps);
+            SDL_CloseIO(srcOps);
             return false;
         }
         
@@ -153,7 +153,7 @@ struct Movie
         io->userdata = &srcOps;
         decoder = THEORAPLAY_startDecode(io, DEF_MAX_VIDEO_FRAMES, THEORAPLAY_VIDFMT_RGBA);
         if (!decoder) {
-            SDL_CloseIO(&srcOps);
+            SDL_CloseIO(srcOps);
             return false;
         }
         
@@ -454,13 +454,13 @@ struct MovieOpenHandler : FileSystem::OpenHandler
 {
     SDL_IOStream *srcOps;
     
-    MovieOpenHandler(SDL_IOStream &srcOps)
-    :   srcOps(&srcOps)
+    MovieOpenHandler(SDL_IOStream *srcOps)
+    :   srcOps(srcOps)
     {}
     
-    bool tryRead(SDL_IOStream &ops, const char *ext)
+    bool tryRead(SDL_IOStream *ops, const char *ext)
     {
-        *srcOps = ops;
+        srcOps = ops;
         return true;
     }
 };
@@ -1626,15 +1626,13 @@ int Graphics::displayContentHeight() const {
 }
 
 int Graphics::displayWidth() const {
-    SDL_DisplayMode dm{};
-    SDL_GetCurrentDisplayMode(SDL_GetDisplayForWindow(shState->sdlWindow()), &dm);
-    return dm.w / p->backingScaleFactor;
+    const SDL_DisplayMode *dm = SDL_GetCurrentDisplayMode(SDL_GetDisplayForWindow(shState->sdlWindow()));
+    return dm->w / p->backingScaleFactor;
 }
 
 int Graphics::displayHeight() const {
-    SDL_DisplayMode dm{};
-    SDL_GetCurrentDisplayMode(SDL_GetDisplayForWindow(shState->sdlWindow()), &dm);
-    return dm.h / p->backingScaleFactor;
+    const SDL_DisplayMode *dm = SDL_GetCurrentDisplayMode(SDL_GetDisplayForWindow(shState->sdlWindow()));
+    return dm->h / p->backingScaleFactor;
 }
 
 void Graphics::resizeScreen(int width, int height) {

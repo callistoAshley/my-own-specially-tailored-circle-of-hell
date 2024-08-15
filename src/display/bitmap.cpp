@@ -437,9 +437,9 @@ struct BitmapOpenHandler : FileSystem::OpenHandler
     : surface(0), gif(0), gif_data(0), gif_data_size(0)
     {}
     
-    bool tryRead(SDL_IOStream &ops, const char *ext)
+    bool tryRead(SDL_IOStream *ops, const char *ext)
     {
-        if (IMG_isGIF(&ops)) {
+        if (IMG_isGIF(ops)) {
             // Use libnsgif to initialise the gif data
             gif = new gif_animation;
             
@@ -454,11 +454,11 @@ struct BitmapOpenHandler : FileSystem::OpenHandler
             
             gif_create(gif, &gif_bitmap_callbacks);
             
-            gif_data_size = SDL_GetIOSize(&ops);
+            gif_data_size = SDL_GetIOSize(ops);
             
             gif_data = new unsigned char[gif_data_size];
-            SDL_SeekIO(&ops, 0, SDL_IO_SEEK_SET);
-            SDL_ReadIO(&ops, gif_data, gif_data_size);
+            SDL_SeekIO(ops, 0, SDL_IO_SEEK_SET);
+            SDL_ReadIO(ops, gif_data, gif_data_size);
             
             int status;
             do {
@@ -482,7 +482,7 @@ struct BitmapOpenHandler : FileSystem::OpenHandler
                 return false;
             }
         } else {
-            surface = IMG_LoadTyped_IO(&ops, 1, ext);
+            surface = IMG_LoadTyped_IO(ops, 1, ext);
         }
         return (surface || gif);
     }
