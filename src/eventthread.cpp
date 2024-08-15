@@ -20,6 +20,7 @@
  */
 
 #include "eventthread.h"
+#include "SDL3/SDL_properties.h"
 #include <SDL3/SDL_video.h>
 
 #include <SDL3/SDL_events.h>
@@ -146,7 +147,7 @@ EventThread::~EventThread()
 }
 
 SDL_TimerID hideCursorTimerID = 0;
-Uint32 cursorTimerCallback(Uint32 interval, void* param)
+Uint32 cursorTimerCallback( void* param, SDL_TimerID timerID, Uint32 interval)
 {
 	EventThread *ethread = static_cast<EventThread*>(param);
 	hideCursorTimerID = 0;
@@ -201,7 +202,9 @@ void EventThread::process(RGSSThreadData &rtData)
 #endif
     
     SDL_UpdateJoysticks();
-    if (SDL_NumJoysticks() > 0 && SDL_IsGamepad(0)) {
+    int joystickCount;
+    SDL_GetJoysticks(&joystickCount);
+    if (joystickCount > 0 && SDL_IsGamepad(0)) {
             ctrl = SDL_OpenGamepad(0);
     }
     
@@ -221,7 +224,7 @@ void EventThread::process(RGSSThreadData &rtData)
     
     // Just in case it's started when the window is opened
     // for some dumb reason
-    SDL_StopTextInput();
+    SDL_StopTextInput(win);
     
     textInputBuffer.clear();
 #ifndef MKXPZ_BUILD_XCODE
@@ -266,7 +269,7 @@ void EventThread::process(RGSSThreadData &rtData)
             case SDL_EVENT_FINGER_DOWN :
             case SDL_EVENT_FINGER_UP :
             case SDL_EVENT_FINGER_MOTION :
-                if (event.tfinger.fingerId >= MAX_FINGERS)
+                if (event.tfinger.fingerID >= MAX_FINGERS)
                     continue;
                 break;
         }
@@ -274,59 +277,54 @@ void EventThread::process(RGSSThreadData &rtData)
         /* Now process the rest */
         switch (event.type)
         {
-            case SDL_WINDOWEVENT :
-                switch (event.window.event)
-                {
-                    case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED :
-                        winW = event.window.data1;
-                        winH = event.window.data2;
-                        
-                        int drwW, drwH;
-                        SDL_GL_GetDrawableSize(win, &drwW, &drwH);
-                        
-                        windowSizeMsg.post(Vec2i(winW, winH));
-                        drawableSizeMsg.post(Vec2i(drwW, drwH));
-                        resetInputStates();
-                        break;
-                        
-                    case SDL_EVENT_WINDOW_MOUSE_ENTER :
-                        cursorInWindow = true;
-                        mouseState.inWindow = true;
-                        updateCursorState(cursorInWindow && windowFocused && !sMenu, gameScreen);
-                        
-                        break;
-                        
-                    case SDL_EVENT_WINDOW_MOUSE_LEAVE :
-                        cursorInWindow = false;
-                        mouseState.inWindow = false;
-                        updateCursorState(cursorInWindow && windowFocused && !sMenu, gameScreen);
-                        
-                        break;
-                        
-                    case SDL_EVENT_WINDOW_CLOSE_REQUESTED :
-                        if (rtData.allowExit) {
-                            terminate = true;
-                        } else {
-                            rtData.triedExit.set();
-                        }
-                        
-                        break;
-                        
-                    case SDL_EVENT_WINDOW_FOCUS_GAINED :
-                        windowFocused = true;
-                        updateCursorState(cursorInWindow && windowFocused && !sMenu, gameScreen);
-                        
-                        break;
-                        
-                    case SDL_EVENT_WINDOW_FOCUS_LOST :
-                        windowFocused = false;
-                        updateCursorState(cursorInWindow && windowFocused && !sMenu, gameScreen);
-                        resetInputStates();
-                        
-                        break;
-                }
+            case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED :
+                winW = event.window.data1;
+                winH = event.window.data2;
+                
+                int drwW, drwH;
+                SDL_GetWindowSizeInPixels(win, &drwW, &drwH);
+                
+                windowSizeMsg.post(Vec2i(winW, winH));
+                drawableSizeMsg.post(Vec2i(drwW, drwH));
+                resetInputStates();
                 break;
                 
+            case SDL_EVENT_WINDOW_MOUSE_ENTER :
+                cursorInWindow = true;
+                mouseState.inWindow = true;
+                updateCursorState(cursorInWindow && windowFocused && !sMenu, gameScreen);
+                
+                break;
+                
+            case SDL_EVENT_WINDOW_MOUSE_LEAVE :
+                cursorInWindow = false;
+                mouseState.inWindow = false;
+                updateCursorState(cursorInWindow && windowFocused && !sMenu, gameScreen);
+                
+                break;
+                
+            case SDL_EVENT_WINDOW_CLOSE_REQUESTED :
+                if (rtData.allowExit) {
+                    terminate = true;
+                } else {
+                    rtData.triedExit.set();
+                }
+                
+                break;
+                
+            case SDL_EVENT_WINDOW_FOCUS_GAINED :
+                windowFocused = true;
+                updateCursorState(cursorInWindow && windowFocused && !sMenu, gameScreen);
+                
+                break;
+                
+            case SDL_EVENT_WINDOW_FOCUS_LOST :
+                windowFocused = false;
+                updateCursorState(cursorInWindow && windowFocused && !sMenu, gameScreen);
+                resetInputStates();
+                
+                break;
+
             case SDL_EVENT_TEXT_INPUT :
                 lockText(true);
                 if (textInputBuffer.size() < 512 && acceptingTextInput) {
@@ -346,8 +344,8 @@ void EventThread::process(RGSSThreadData &rtData)
                 break;
                 
             case SDL_EVENT_KEY_DOWN :
-                if (event.key.keysym.scancode == SDL_SCANCODE_RETURN &&
-                    (event.key.keysym.mod & toggleFSMod))
+                if (event.key.scancode == SDL_SCANCODE_RETURN &&
+                    (event.key.mod & toggleFSMod))
                 {
                     setFullscreen(win, !fullscreen);
                     if (!fullscreen && havePendingTitle)
@@ -360,7 +358,7 @@ void EventThread::process(RGSSThreadData &rtData)
                     break;
                 }
                 
-                if (event.key.keysym.scancode == SDL_SCANCODE_F1 && rtData.config.enableSettings)
+                if (event.key.scancode == SDL_SCANCODE_F1 && rtData.config.enableSettings)
                 {
                     // Do not open settings menu until initializing shared state.
                     // Opening before initializing shared state will crash (segmentation fault).
@@ -382,7 +380,7 @@ void EventThread::process(RGSSThreadData &rtData)
 #endif
                 }
                 
-                if (event.key.keysym.scancode == SDL_SCANCODE_F2)
+                if (event.key.scancode == SDL_SCANCODE_F2)
                 {
                     if (!displayingFPS)
                     {
@@ -413,7 +411,7 @@ void EventThread::process(RGSSThreadData &rtData)
                     break;
                 }
                 
-                if (event.key.keysym.scancode == SDL_SCANCODE_F12)
+                if (event.key.scancode == SDL_SCANCODE_F12)
                 {
                     if (!rtData.config.enableReset)
                         break;
@@ -427,7 +425,7 @@ void EventThread::process(RGSSThreadData &rtData)
                     break;
                 }
 
-                if (acceptingTextInput && event.key.keysym.sym == SDLK_BACKSPACE) {
+                if (acceptingTextInput && event.key.key == SDLK_BACKSPACE) {
                     // remove one unicode character
                     lockText(true);
                     while (textInputBuffer.length() != 0 && (textInputBuffer.back() & 0xc0) == 0x80) {
@@ -439,11 +437,11 @@ void EventThread::process(RGSSThreadData &rtData)
                     lockText(false);
                 }
                 
-                keyStates[event.key.keysym.scancode] = true;
+                keyStates[event.key.scancode] = true;
                 break;
                 
             case SDL_EVENT_KEY_UP :
-                if (event.key.keysym.scancode == SDL_SCANCODE_F12)
+                if (event.key.scancode == SDL_SCANCODE_F12)
                 {
                     if (!rtData.config.enableReset)
                         break;
@@ -453,19 +451,19 @@ void EventThread::process(RGSSThreadData &rtData)
                     break;
                 }
                 
-                keyStates[event.key.keysym.scancode] = false;
+                keyStates[event.key.scancode] = false;
                 break;
                 
             case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
-                controllerState.buttons[event.cbutton.button] = true;
+                controllerState.buttons[event.gbutton.button] = true;
                 break;
                 
             case SDL_EVENT_GAMEPAD_BUTTON_UP:
-                controllerState.buttons[event.cbutton.button] = false;
+                controllerState.buttons[event.gbutton.button] = false;
                 break;
                 
             case SDL_EVENT_GAMEPAD_AXIS_MOTION:
-                controllerState.axes[event.caxis.axis] = event.caxis.value;
+                controllerState.axes[event.gaxis.axis] = event.gaxis.value;
                 break;
                 
             case SDL_EVENT_GAMEPAD_ADDED:
@@ -500,17 +498,17 @@ void EventThread::process(RGSSThreadData &rtData)
                 SDL_AtomicAdd(&verticalScrollDistance, event.wheel.y);
                 
             case SDL_EVENT_FINGER_DOWN :
-                i = event.tfinger.fingerId;
+                i = event.tfinger.fingerID;
                 touchState.fingers[i].down = true;
                 
             case SDL_EVENT_FINGER_MOTION :
-                i = event.tfinger.fingerId;
+                i = event.tfinger.fingerID;
                 touchState.fingers[i].x = event.tfinger.x * winW;
                 touchState.fingers[i].y = event.tfinger.y * winH;
                 break;
                 
             case SDL_EVENT_FINGER_UP :
-                i = event.tfinger.fingerId;
+                i = event.tfinger.fingerID;
                 memset(&touchState.fingers[i], 0, sizeof(touchState.fingers[0]));
                 break;
                 
@@ -533,7 +531,7 @@ void EventThread::process(RGSSThreadData &rtData)
                         break;
                         
                     case REQUEST_WINCENTER : {
-                            rc = SDL_GetDesktopDisplayMode(SDL_GetDisplayForWindow(win), &dm);
+                            dm = *SDL_GetDesktopDisplayMode(SDL_GetDisplayForWindow(win));
                             SDL_Rect rect;
                             SDL_GetDisplayUsableBounds(SDL_GetDisplayForWindow(win), &rect);
                             if (!rc)
@@ -552,12 +550,12 @@ void EventThread::process(RGSSThreadData &rtData)
                     case REQUEST_TEXTMODE :
                         if (event.user.code)
                         {
-                            SDL_StartTextInput();
+                            SDL_StartTextInput(win);
                             acceptingTextInput = true;
                         }
                         else
                         {
-                            SDL_StopTextInput();
+                            SDL_StopTextInput(win);
                             acceptingTextInput = false;
                         }
                         break;
@@ -601,10 +599,15 @@ void EventThread::process(RGSSThreadData &rtData)
                     case REQUEST_NEW_WINDOW:
                     {
                         const CreateWindowArgs *args = static_cast<const CreateWindowArgs*>(event.user.data1);
-                        new_window = SDL_CreateWindow(args->name,
-                                                   args->x, args->y,
-                                                   args->w, args->h,
-                                                   args->flags);
+                        SDL_PropertiesID props = SDL_CreateProperties();
+                        SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_TITLE_STRING, args->name);
+                        SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_X_NUMBER, args->x);
+                        SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_Y_NUMBER, args->y);
+                        SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, args->w);
+                        SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, args->h);
+                        SDL_SetNumberProperty(props, "flags", args->flags);
+                        new_window = SDL_CreateWindowWithProperties(props);
+                        SDL_DestroyProperties(props);
                         break;
                     }
                     case REQUEST_DESTROY_WINDOW:
@@ -708,23 +711,26 @@ int EventThread::eventFilter(void *data, SDL_Event *event)
             Debug() << "SDL_EVENT_LOW_MEMORY";
             return 0;
         /* Workaround for Windows pausing on drag */
-        case SDL_WINDOWEVENT:
-            {
-                unsigned int win_id = SDL_GetWindowID(rtData.window);
-                if (win_id != event->window.windowID) // filter out events from other windows
-                    return 0;
-            }
-
-            if (event->window.event == SDL_EVENT_WINDOW_MOVED)
-            {
-                if (shState != NULL && shState->rgssVersion > 0)
+        default:
+            // sdl3 removed SDL_WINDOWEVENT, so we just check if the type is in the expected range
+            if (event->type >= SDL_EVENT_WINDOW_FIRST && event->type <= SDL_EVENT_WINDOW_LAST) {
                 {
-                    shState->oneshot().setWindowPos(event->window.data1, event->window.data2);
-                    // shState->graphics().update(false);
+                    unsigned int win_id = SDL_GetWindowID(rtData.window);
+                    if (win_id != event->window.windowID) // filter out events from other windows
+                        return 0;
                 }
-                return 0;
+
+                if (event->type == SDL_EVENT_WINDOW_MOVED)
+                {
+                    if (shState != NULL && shState->rgssVersion > 0)
+                    {
+                        shState->oneshot().setWindowPos(event->window.data1, event->window.data2);
+                        // shState->graphics().update(false);
+                    }
+                    return 0;
+                }
+                return 1;
             }
-            return 1;
             
             //	case SDL_EVENT_RENDER_TARGETS_RESET :
             //		Debug() << "****** SDL_EVENT_RENDER_TARGETS_RESET";
@@ -733,6 +739,7 @@ int EventThread::eventFilter(void *data, SDL_Event *event)
             //	case SDL_EVENT_RENDER_DEVICE_RESET :
             //		Debug() << "****** SDL_EVENT_RENDER_DEVICE_RESET";
             //		return 0;
+            
     }
     
     return 1;
@@ -758,7 +765,7 @@ void EventThread::resetInputStates()
 void EventThread::setFullscreen(SDL_Window *win, bool mode)
 {
     SDL_SetWindowFullscreen
-    (win, mode ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+    (win, mode ? SDL_WINDOW_FULLSCREEN : 0);
     fullscreen = mode;
 }
 
@@ -769,9 +776,12 @@ void EventThread::updateCursorState(bool inWindow,
     bool inScreen = inWindow && SDL_PointInRect(&pos, &screen);
     
     if (inScreen)
-        SDL_ShowCursor(showCursor || hideCursorTimerID ? SDL_TRUE : SDL_FALSE);
+        if (showCursor || hideCursorTimerID)
+            SDL_ShowCursor();
+        else
+            SDL_HideCursor();
     else
-        SDL_ShowCursor(SDL_TRUE);
+        SDL_ShowCursor();
 }
 
 void EventThread::requestTerminate()

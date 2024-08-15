@@ -314,8 +314,6 @@ inline uint8_t formatSampleSize(int sdlFormat)
 	case SDL_AUDIO_S8 :
 		return 1;
 
-	case AUDIO_U16LSB :
-	case AUDIO_U16MSB :
 	case SDL_AUDIO_S16LE :
 	case SDL_AUDIO_S16BE :
 		return 2;
